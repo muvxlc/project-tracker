@@ -19,11 +19,11 @@ export default defineEventHandler(async (event) => {
   // 2. Delete from database
   await db.delete(projectFiles).where(eq(projectFiles.id, id));
 
-  // 3. Delete from storage (optional but recommended)
+  // 3. Delete from storage
   try {
-    const filePath = path.join(process.cwd(), 'public', file.filePath);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    const physicalPath = path.join(process.cwd(), 'storage', 'uploads', file.filePath);
+    if (fs.existsSync(physicalPath)) {
+      fs.unlinkSync(physicalPath);
     }
   } catch (e) {
     console.error('Failed to delete physical file:', e);

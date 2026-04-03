@@ -58,6 +58,7 @@ services:
       - .:/app
       - /app/node_modules
       - /app/.nuxt
+      - ./storage:/app/storage
     command: npm run dev
 
 volumes:
