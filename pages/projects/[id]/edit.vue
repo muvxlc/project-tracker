@@ -233,7 +233,7 @@ const updateProject = async () => {
           </UFormField>
 
           <UFormField label="รายละเอียดเพิ่มเติม" class="md:col-span-2">
-            <UTextarea v-model="form.description" placeholder="ระบุรายละเอียดโครงการ (ถ้ามี)..." :rows="4" />
+            <UTextarea v-model="form.description" placeholder="ระบุรายละเอียดโครงการ (ถ้ามี)..." :rows="8" class="w-full" />
           </UFormField>
 
           <!-- Display Existing Files -->
@@ -266,13 +266,17 @@ const updateProject = async () => {
           <!-- Edit Note Modal -->
           <UModal v-model:open="isNoteModalOpen" title="แก้ไขหมายเหตุ/บันทึก" @update:open="(val) => !val && (editingFile = null)">
             <template #content>
-              <div class="p-6 space-y-4">
-                <UFormField label="บันทึก/หมายเหตุ">
-                  <UTextarea v-if="editingFile" v-model="editingFile.note" placeholder="ระบุหมายเหตุเพิ่มเติมสำหรับไฟล์นี้..." />
-                </UFormField>
-                <div class="flex justify-end gap-2">
-                  <UButton label="ยกเลิก" color="gray" variant="ghost" @click="isNoteModalOpen = false" />
-                  <UButton label="บันทึก" color="primary" @click="saveNote" />
+              <div class="p-8 space-y-6 flex flex-col items-center">
+                <div class="w-full max-w-md space-y-4 text-center">
+                  <UIcon name="i-heroicons-pencil-square" class="w-12 h-12 text-primary mx-auto opacity-20" />
+                  <h3 class="text-lg font-bold">บันทึก/หมายเหตุเพิ่มเติม</h3>
+                  <UFormField label="ระบุข้อมูลที่ต้องการแก้ไข" class="text-left">
+                    <UTextarea v-if="editingFile" v-model="editingFile.note" placeholder="พิมพ์หมายเหตุสำหรับไฟล์นี้..." :rows="4" class="w-full" />
+                  </UFormField>
+                </div>
+                <div class="flex justify-center gap-3 w-full border-t pt-6">
+                  <UButton label="ยกเลิก" color="gray" variant="ghost" class="px-6" @click="isNoteModalOpen = false" />
+                  <UButton label="บันทึกข้อมูล" color="primary" class="px-10" @click="saveNote" />
                 </div>
               </div>
             </template>
@@ -294,11 +298,11 @@ const updateProject = async () => {
                 ไฟล์ที่เลือกใหม่ ({{ files.length }} ไฟล์)
               </p>
               <ul class="space-y-3">
-                <li v-for="(item, index) in files" :key="item.file.name + index" class="flex flex-col gap-2 p-3 border rounded-md bg-white dark:bg-gray-900 dark:border-gray-700 shadow-sm">
+                <li v-for="(item, index) in files" :key="item.file.name + index" class="flex flex-col gap-3 p-4 border rounded-md bg-white dark:bg-gray-900 dark:border-gray-700 shadow-sm">
                   <div class="flex items-center justify-between text-xs">
                     <div class="flex items-center gap-2 truncate">
                       <UIcon name="i-heroicons-document" class="text-gray-400" />
-                      <span class="truncate font-medium">{{ item.file.name }}</span>
+                      <span class="truncate font-bold text-gray-700 dark:text-gray-200">{{ item.file.name }}</span>
                     </div>
                     <div class="flex items-center gap-3">
                       <span class="text-gray-400">{{ (item.file.size / 1024).toFixed(1) }} KB</span>

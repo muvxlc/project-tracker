@@ -1,7 +1,8 @@
 import { db } from '../../utils/db';
-import { projects } from '../../database/schema';
+import { projects, projectStatuses } from '../../database/schema';
 import { eq } from 'drizzle-orm';
 import { verifyToken } from '../../utils/auth';
+import { notifyStatusChange } from '../../utils/notifications';
 
 export default defineEventHandler(async (event) => {
   const token = getCookie(event, 'token');
@@ -17,19 +18,28 @@ export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'));
   const body = await readBody(event);
 
-  // 1. Fetch current project to check ownership
-  const currentProject = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
-  if (currentProject.length === 0) {
+  // 1. Fetch current project to check ownership and status change
+  const currentProjects = await db.select({
+    name: projects.name,
+    statusId: projects.statusId,
+    createdById: projects.createdById
+  }).from(projects).where(eq(projects.id, id)).limit(1);
+  
+  if (currentProjects.length === 0) {
     throw createError({ statusCode: 404, statusMessage: 'Project not found' });
   }
+  const project = currentProjects[0];
 
   // 2. RBAC check
   const isAdmin = ['superadmin', 'admin', 'approver'].includes(user.role as string);
-  const isOwner = currentProject[0].createdById === Number(user.id);
+  const isOwner = project.createdById === Number(user.id);
 
   if (!isAdmin && !isOwner) {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden: You cannot edit this project' });
   }
+
+  const newStatusId = Number(body.statusId);
+  const statusChanged = project.statusId !== newStatusId;
 
   // 3. Update
   await db.update(projects).set({
@@ -39,12 +49,31 @@ export default defineEventHandler(async (event) => {
     categoryId: Number(body.categoryId),
     agencyId: Number(body.agencyId),
     responsibleId: Number(body.responsibleId),
-    statusId: Number(body.statusId),
+    statusId: newStatusId,
     implementationDate: body.implementationDate,
     completionDate: body.completionDate,
     budget: body.budget.toString(),
     description: body.description
   }).where(eq(projects.id, id));
+
+  // 4. Send Notification if status changed
+  if (statusChanged) {
+    try {
+      const statuses = await db.select().from(projectStatuses);
+      const oldStatusName = statuses.find(s => s.id === project.statusId)?.name || 'Unknown';
+      const newStatusName = statuses.find(s => s.id === newStatusId)?.name || 'Unknown';
+      
+      // Fire and forget notification
+      notifyStatusChange(
+        body.name || project.name, 
+        oldStatusName, 
+        newStatusName, 
+        (user.fullName as string) || (user.username as string)
+      ).catch(console.error);
+    } catch (e) {
+      console.error('Failed to send status change notification:', e);
+    }
+  }
 
   return { success: true };
 });

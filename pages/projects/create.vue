@@ -171,7 +171,7 @@ const submitProject = async () => {
           </UFormField>
 
           <UFormField label="รายละเอียดเพิ่มเติม" class="md:col-span-2">
-            <UTextarea v-model="form.description" placeholder="ระบุรายละเอียดโครงการ (ถ้ามี)..." :rows="4" />
+            <UTextarea v-model="form.description" placeholder="ระบุรายละเอียดโครงการ (ถ้ามี)..." :rows="8" class="w-full" />
           </UFormField>
 
           <UFormField label="เอกสารโครงการ" class="md:col-span-2">
@@ -193,18 +193,20 @@ const submitProject = async () => {
                 ไฟล์ที่เลือก ({{ files.length }} ไฟล์)
               </p>
               <ul class="space-y-3">
-                <li v-for="(item, index) in files" :key="item.file.name + index" class="flex flex-col gap-2 p-3 border rounded-md bg-white dark:bg-gray-900 dark:border-gray-700 shadow-sm">
+                <li v-for="(item, index) in files" :key="item.file.name + index" class="flex flex-col gap-3 p-4 border rounded-md bg-white dark:bg-gray-900 dark:border-gray-700 shadow-sm">
                   <div class="flex items-center justify-between text-xs">
                     <div class="flex items-center gap-2 truncate">
                       <UIcon name="i-heroicons-document" class="text-gray-400" />
-                      <span class="truncate font-medium">{{ item.file.name }}</span>
+                      <span class="truncate font-bold text-gray-700 dark:text-gray-200">{{ item.file.name }}</span>
                     </div>
                     <div class="flex items-center gap-3">
                       <span class="text-gray-400">{{ (item.file.size / 1024).toFixed(1) }} KB</span>
                       <UButton icon="i-heroicons-trash" size="2xs" color="red" variant="ghost" @click="removeFile(index)" />
                     </div>
                   </div>
-                  <UInput v-model="item.note" placeholder="เพิ่มบันทึก/หมายเหตุ (ไม่บังคับ)" size="sm" icon="i-heroicons-pencil-square" />
+                  <div class="flex flex-col gap-1 w-full">
+                    <UInput v-model="item.note" placeholder="เพิ่มบันทึก/หมายเหตุ (ไม่บังคับ)" size="sm" icon="i-heroicons-pencil-square" class="w-full" />
+                  </div>
                 </li>
               </ul>
             </div>

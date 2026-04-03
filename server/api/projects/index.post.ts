@@ -1,6 +1,8 @@
 import { db } from '../../utils/db';
-import { projects } from '../../database/schema';
+import { projects, projectStatuses } from '../../database/schema';
 import { verifyToken } from '../../utils/auth';
+import { notifyStatusChange } from '../../utils/notifications';
+import { eq } from 'drizzle-orm';
 
 export default defineEventHandler(async (event) => {
   const token = getCookie(event, 'token');
@@ -42,6 +44,21 @@ export default defineEventHandler(async (event) => {
     description,
     createdById: Number(user.id)
   });
+
+  // Send Notification for new project
+  try {
+    const statusResult = await db.select().from(projectStatuses).where(eq(projectStatuses.id, Number(statusId))).limit(1);
+    const statusName = statusResult[0]?.name || 'รอดำเนินการ';
+    
+    notifyStatusChange(
+      name,
+      'สร้างโครงการใหม่',
+      statusName,
+      (user.fullName as string) || (user.username as string)
+    ).catch(console.error);
+  } catch (e) {
+    console.error('Failed to send creation notification:', e);
+  }
 
   return { id: result[0].insertId };
 });

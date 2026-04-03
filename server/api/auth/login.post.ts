@@ -48,6 +48,7 @@ export default defineEventHandler(async (event) => {
   const token = await createToken({
     id: user.id,
     username: user.username,
+    fullName: user.fullName,
     role: user.role,
     agencyId: user.agencyId,
   });
