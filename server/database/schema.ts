@@ -70,6 +70,7 @@ export const projects = mysqlTable('projects', {
 
 export const projectFiles = mysqlTable('project_files', {
   id: int('id').autoincrement().primaryKey(),
+  uuid: varchar('uuid', { length: 36 }).notNull().unique(),
   projectId: int('project_id').notNull().references(() => projects.id),
   filename: varchar('filename', { length: 255 }).notNull(),
   filePath: varchar('file_path', { length: 500 }).notNull(),

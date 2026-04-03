@@ -247,7 +247,7 @@ const updateProject = async () => {
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2 truncate">
                     <UIcon name="i-heroicons-document" />
-                    <a :href="file.filePath" target="_blank" class="text-xs text-blue-600 hover:underline truncate font-medium">{{ file.filename }}</a>
+                    <a :href="`/api/projects/files/${file.uuid}`" target="_blank" class="text-xs text-blue-600 hover:underline truncate font-medium">{{ file.filename }}</a>
                   </div>
                   <div class="flex items-center gap-2">
                     <span class="text-[10px] text-gray-400 mr-2">{{ (file.fileSize / 1024).toFixed(1) }} KB</span>

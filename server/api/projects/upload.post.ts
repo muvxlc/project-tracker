@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { db } from '../../utils/db';
 import { projectFiles } from '../../database/schema';
 
@@ -33,9 +34,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Project ID and files are required' });
   }
 
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+  // 1. New Private Storage Path
+  // Using 'storage/uploads/projects/[id]' structure
+  const projectUploadDir = path.join(process.cwd(), 'storage', 'uploads', 'projects', projectId.toString());
+  if (!fs.existsSync(projectUploadDir)) {
+    fs.mkdirSync(projectUploadDir, { recursive: true });
   }
 
   const results = [];
@@ -43,18 +46,24 @@ export default defineEventHandler(async (event) => {
     const file = files[i];
     const note = notes[i] || '';
     
-    // Add timestamp to filename to avoid collisions
+    // 2. Use UUID for physical filename to prevent collisions and improve security
     const ext = path.extname(file.filename);
-    const basename = path.basename(file.filename, ext);
-    const safeFilename = `${basename}-${Date.now()}${ext}`;
-    const filePath = path.join(uploadDir, safeFilename);
+    const secureFilename = `${randomUUID()}${ext}`;
+    const physicalPath = path.join(projectUploadDir, secureFilename);
 
-    fs.writeFileSync(filePath, file.data);
+    // 3. Save physical file
+    fs.writeFileSync(physicalPath, file.data);
+
+    // 4. Save relative path in DB
+    // Format: projects/[projectId]/[secureFilename]
+    const relativePath = path.join('projects', projectId.toString(), secureFilename);
+    const fileUuid = randomUUID();
 
     const result = await db.insert(projectFiles).values({
       projectId,
-      filename: file.filename,
-      filePath: `/uploads/${safeFilename}`,
+      uuid: fileUuid,
+      filename: file.filename, // Keep original name for display
+      filePath: relativePath,
       fileSize: file.data.length,
       mimeType: file.type,
       note: note
