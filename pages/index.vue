@@ -67,7 +67,9 @@ const formatBudget = (val: string | number) => {
 const totalProjectsCount = computed(() => projects.value?.length || 0);
 
 const getStatusCount = (statusName: string) => {
-    const status = stats.value?.statusStats.find((s) => s.status === statusName);
+    const status = stats.value?.statusStats.find(
+        (s) => s.status === statusName,
+    );
     return status ? status.count : 0;
 };
 
@@ -83,7 +85,7 @@ const columns = [
     { accessorKey: "quarterName", header: "ไตรมาส" },
     { accessorKey: "category", header: "ประเภท" },
     { accessorKey: "name", header: "ชื่อแผนงาน-โครงการ" },
-    { accessorKey: "agency", header: "หน่วยงาน" },
+    { accessorKey: "agency", header: "กลุ่มงาน" },
     { accessorKey: "responsible", header: "ผู้รับผิดชอบ" },
     { accessorKey: "budget", header: "งบประมาณ" },
     { accessorKey: "status", header: "สถานะ" },
@@ -135,12 +137,12 @@ const textMap: Record<string, string> = {
 };
 
 const iconMap: Record<string, string> = {
-    "รับเอกสาร": "i-heroicons-document-arrow-down",
-    "ตรวจสอบ": "i-heroicons-magnifying-glass-circle",
-    "อนุมัติ": "i-heroicons-check-badge",
-    "ดำเนินการ": "i-heroicons-play-circle",
-    "ดำเนินการเสร็จสิ้น": "i-heroicons-calendar-check",
-    "ยกเลิก": "i-heroicons-x-circle",
+    รับเอกสาร: "i-heroicons-document-arrow-down",
+    ตรวจสอบ: "i-heroicons-magnifying-glass-circle",
+    อนุมัติ: "i-heroicons-check-badge",
+    ดำเนินการ: "i-heroicons-play-circle",
+    ดำเนินการเสร็จสิ้น: "i-heroicons-calendar-check",
+    ยกเลิก: "i-heroicons-x-circle",
 };
 </script>
 
@@ -162,30 +164,68 @@ const iconMap: Record<string, string> = {
             </div>
 
             <!-- Dashboard Cards -->
-            <div v-if="stats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div
+                v-if="stats"
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+            >
                 <!-- Total Card -->
                 <UCard class="border-l-4 border-l-blue-500 shadow-sm">
                     <div class="flex items-center gap-4">
-                        <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                            <UIcon name="i-heroicons-clipboard-document-list" class="w-6 h-6 text-blue-600" />
+                        <div
+                            class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full"
+                        >
+                            <UIcon
+                                name="i-heroicons-clipboard-document-list"
+                                class="w-6 h-6 text-blue-600"
+                            />
                         </div>
                         <div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">จำนวนแผนงาน โครงการทั้งหมด</div>
-                            <div class="text-2xl font-bold">{{ totalProjectsCount }}</div>
+                            <div
+                                class="text-sm text-gray-500 dark:text-gray-400 font-medium"
+                            >
+                                จำนวนแผนงาน โครงการทั้งหมด
+                            </div>
+                            <div class="text-2xl font-bold">
+                                {{ totalProjectsCount }}
+                            </div>
                         </div>
                     </div>
                 </UCard>
 
                 <!-- Dynamic Status Cards -->
-                <UCard v-for="s in stats.statusStats" :key="s.status" 
-                       :class="['border-l-4 shadow-sm', borderMap[s.color] || 'border-l-gray-500']">
+                <UCard
+                    v-for="s in stats.statusStats"
+                    :key="s.status"
+                    :class="[
+                        'border-l-4 shadow-sm',
+                        borderMap[s.color] || 'border-l-gray-500',
+                    ]"
+                >
                     <div class="flex items-center gap-4">
-                        <div :class="['p-3 rounded-full', bgMap[s.color] || 'bg-gray-100 dark:bg-gray-900/30']">
-                            <UIcon :name="iconMap[s.status] || 'i-heroicons-document-text'" 
-                                   :class="['w-6 h-6', textMap[s.color] || 'text-gray-600']" />
+                        <div
+                            :class="[
+                                'p-3 rounded-full',
+                                bgMap[s.color] ||
+                                    'bg-gray-100 dark:bg-gray-900/30',
+                            ]"
+                        >
+                            <UIcon
+                                :name="
+                                    iconMap[s.status] ||
+                                    'i-heroicons-document-text'
+                                "
+                                :class="[
+                                    'w-6 h-6',
+                                    textMap[s.color] || 'text-gray-600',
+                                ]"
+                            />
                         </div>
                         <div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">{{ s.status }}</div>
+                            <div
+                                class="text-sm text-gray-500 dark:text-gray-400 font-medium"
+                            >
+                                {{ s.status }}
+                            </div>
                             <div class="text-2xl font-bold">{{ s.count }}</div>
                         </div>
                     </div>
@@ -215,7 +255,7 @@ const iconMap: Record<string, string> = {
                             >
                                 <option value="">ทุกปีงบประมาณ</option>
                                 <option
-                                    v-for="y in (years as any[])"
+                                    v-for="y in years as any[]"
                                     :key="y.id"
                                     :value="y.id"
                                 >
@@ -227,9 +267,9 @@ const iconMap: Record<string, string> = {
                                 v-model="filters.agencyId"
                                 class="h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary"
                             >
-                                <option value="">ทุกหน่วยงาน</option>
+                                <option value="">ทุกกลุ่มงาน</option>
                                 <option
-                                    v-for="a in (agencies as any[])"
+                                    v-for="a in agencies as any[]"
                                     :key="a.id"
                                     :value="a.id"
                                 >
@@ -243,7 +283,7 @@ const iconMap: Record<string, string> = {
                             >
                                 <option value="">ทุกประเภท</option>
                                 <option
-                                    v-for="c in (categories as any[])"
+                                    v-for="c in categories as any[]"
                                     :key="c.id"
                                     :value="c.id"
                                 >
@@ -257,7 +297,7 @@ const iconMap: Record<string, string> = {
                             >
                                 <option value="">ทุกสถานะ</option>
                                 <option
-                                    v-for="s in (statuses as any[])"
+                                    v-for="s in statuses as any[]"
                                     :key="s.id"
                                     :value="s.id"
                                 >
@@ -270,7 +310,13 @@ const iconMap: Record<string, string> = {
                                 icon="i-heroicons-arrow-path"
                                 color="gray"
                                 @click="
-                                    filters = { fiscalYearId: '', agencyId: '', categoryId: '', statusId: '', search: '' }
+                                    filters = {
+                                        fiscalYearId: '',
+                                        agencyId: '',
+                                        categoryId: '',
+                                        statusId: '',
+                                        search: '',
+                                    }
                                 "
                             />
                         </div>
