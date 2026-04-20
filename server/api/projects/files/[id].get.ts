@@ -45,20 +45,29 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden: You do not have permission to view this file' });
   }
 
-  // 4. Resolve physical path
-  const physicalPath = path.join(process.cwd(), 'storage', 'uploads', file.filePath);
+  // 4. Resolve and Validate physical path (Path Traversal Protection) - TASK 5
+  const rootDir = path.join(process.cwd(), 'storage', 'uploads');
+  // path.resolve helps clean up any ../ in the relative path
+  const physicalPath = path.resolve(rootDir, file.filePath);
+
+  // Check if the resolved path is still inside rootDir
+  if (!physicalPath.startsWith(rootDir)) {
+    console.error(`[SECURITY] Potential path traversal attempt! User: ${user.username}, Path: ${file.filePath}`);
+    throw createError({ statusCode: 400, statusMessage: 'Invalid file path' });
+  }
 
   if (!fs.existsSync(physicalPath)) {
     throw createError({ statusCode: 404, statusMessage: 'Physical file not found' });
   }
 
-  // 5. Send file
+  // 5. Send file with security headers - TASK 1
   const fileBuffer = fs.readFileSync(physicalPath);
   
-  // Set headers for download/view
   setHeaders(event, {
     'Content-Type': file.mimeType || 'application/octet-stream',
-    'Content-Disposition': `inline; filename="${encodeURIComponent(file.filename)}"`
+    'Content-Disposition': `inline; filename="${encodeURIComponent(file.filename)}"`,
+    'X-Content-Type-Options': 'nosniff', // Prevent MIME sniffing
+    'Cache-Control': 'private, max-age=3600'
   });
 
   return fileBuffer;

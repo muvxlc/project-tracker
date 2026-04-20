@@ -48,6 +48,23 @@ cp .env.example .env  # หรือ nano .env
    ```
 
 ## 5. เริ่มรันระบบ
+คุณสามารถเลือกติดตั้งได้ 2 วิธี:
+
+### วิธีที่ 1: ใช้สคริปต์อัตโนมัติ (แนะนำ)
+**สำหรับ Linux/macOS/WSL:**
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+**สำหรับ Windows PowerShell:**
+หากเจอปัญหาเรื่อง Execution Policy ให้รันด้วยคำสั่งนี้:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\deploy.ps1
+```
+สคริปต์จะทำการเตรียมโฟลเดอร์, รัน Docker และถามเรื่องการนำเข้าข้อมูลอัตโนมัติครับ
+
+### วิธีที่ 2: รันด้วยคำสั่ง Docker ปกติ
 รันคำสั่ง Build และ Start containers ทั้งหมด:
 ```bash
 docker compose up -d --build

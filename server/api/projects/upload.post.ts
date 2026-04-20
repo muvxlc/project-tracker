@@ -4,6 +4,27 @@ import { randomUUID } from 'node:crypto';
 import { db } from '../../utils/db';
 import { projectFiles } from '../../database/schema';
 
+// Helper to check File Signatures (Magic Numbers)
+const isAllowedFileType = (buffer: Buffer, filename: string) => {
+  const ext = path.extname(filename).toLowerCase();
+  const header = buffer.toString('hex', 0, 4).toUpperCase();
+
+  // PDF: %PDF- (25504446)
+  if (ext === '.pdf') return header === '25504446';
+  
+  // Images: JPG (FFD8FF), PNG (89504E47)
+  if (ext === '.jpg' || ext === '.jpeg') return header.startsWith('FFD8FF');
+  if (ext === '.png') return header === '89504E47';
+  
+  // Office Docs (ZIP based): DOCX, XLSX (504B0304)
+  if (ext === '.docx' || ext === '.xlsx') return header === '504B0304';
+  
+  // Older Office Docs: .doc, .xls (D0CF11E0)
+  if (ext === '.doc' || ext === '.xls') return header === 'D0CF11E0';
+
+  return false;
+};
+
 export default defineEventHandler(async (event) => {
   const formData = await readMultipartFormData(event);
   if (!formData) {
@@ -19,6 +40,16 @@ export default defineEventHandler(async (event) => {
       projectId = Number(part.data.toString());
     } else if (part.name === 'files') {
       if (part.filename && part.data) {
+        // 1. Check File Size (e.g., 30MB limit)
+        if (part.data.length > 30 * 1024 * 1024) {
+          throw createError({ statusCode: 400, statusMessage: `File ${part.filename} is too large (>30MB)` });
+        }
+
+        // 2. Validate File Content (Magic Numbers) - TASK 2
+        if (!isAllowedFileType(part.data, part.filename)) {
+          throw createError({ statusCode: 400, statusMessage: `File ${part.filename} has invalid or disallowed content type.` });
+        }
+
         files.push({
           filename: part.filename,
           data: part.data,
@@ -34,8 +65,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Project ID and files are required' });
   }
 
-  // 1. New Private Storage Path
-  // Using 'storage/uploads/projects/[id]' structure
   const projectUploadDir = path.join(process.cwd(), 'storage', 'uploads', 'projects', projectId.toString());
   if (!fs.existsSync(projectUploadDir)) {
     fs.mkdirSync(projectUploadDir, { recursive: true });
@@ -46,23 +75,20 @@ export default defineEventHandler(async (event) => {
     const file = files[i];
     const note = notes[i] || '';
     
-    // 2. Use UUID for physical filename to prevent collisions and improve security
     const ext = path.extname(file.filename);
     const secureFilename = `${randomUUID()}${ext}`;
     const physicalPath = path.join(projectUploadDir, secureFilename);
 
-    // 3. Save physical file
-    fs.writeFileSync(physicalPath, file.data);
+    // 3. Save physical file with NO EXECUTE permissions (0644) - TASK 1
+    fs.writeFileSync(physicalPath, file.data, { mode: 0o644 });
 
-    // 4. Save relative path in DB
-    // Format: projects/[projectId]/[secureFilename]
     const relativePath = path.join('projects', projectId.toString(), secureFilename);
     const fileUuid = randomUUID();
 
     const result = await db.insert(projectFiles).values({
       projectId,
       uuid: fileUuid,
-      filename: file.filename, // Keep original name for display
+      filename: file.filename,
       filePath: relativePath,
       fileSize: file.data.length,
       mimeType: file.type,

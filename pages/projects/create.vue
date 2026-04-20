@@ -182,7 +182,7 @@ const submitProject = async () => {
                   <p class="mb-2 text-sm text-gray-500 dark:text-gray-400 font-semibold text-center">
                     คลิกเพื่ออัปโหลด หรือลากไฟล์มาวางที่นี่
                   </p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">PDF, DOCX, JPG (ขนาดไม่เกิน 10MB)</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">PDF, DOCX, JPG (ขนาดไม่เกิน 30MB)</p>
                 </div>
                 <input type="file" class="hidden" multiple @change="onFileChange" />
               </label>

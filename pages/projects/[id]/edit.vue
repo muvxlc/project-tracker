@@ -287,7 +287,8 @@ const updateProject = async () => {
               <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500">
                 <div class="flex flex-col items-center justify-center pt-2 pb-2">
                   <UIcon name="i-heroicons-cloud-arrow-up" class="w-6 h-6 mb-2 text-gray-500 dark:text-gray-400" />
-                  <p class="text-sm text-gray-500 dark:text-gray-400 font-semibold">คลิกเพื่อเพิ่มไฟล์ใหม่</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400 font-semibold text-center">คลิกเพื่ออัปโหลด หรือลากไฟล์มาวางที่นี่</p>
+                  <p class="text-[10px] text-gray-400 mt-1">PDF, DOCX, JPG (ขนาดไม่เกิน 30MB)</p>
                 </div>
                 <input type="file" class="hidden" multiple @change="onFileChange" />
               </label>
