@@ -1,5 +1,5 @@
 import { db } from '../../utils/db';
-import { projects, fiscalYears, categories, agencies, users, projectStatuses, quarters, responsiblePersons } from '../../database/schema';
+import { projects, fiscalYears, categories, agencies, users, projectStatuses, quarters, responsiblePersons, budgetSources } from '../../database/schema';
 import { eq, and, like } from 'drizzle-orm';
 
 export default defineEventHandler(async (event) => {
@@ -37,12 +37,15 @@ export default defineEventHandler(async (event) => {
     id: projects.id,
     name: projects.name,
     budget: projects.budget,
+    initialBudget: projects.initialBudget,
+    actualBudget: projects.actualBudget,
     implementationDate: projects.implementationDate,
     fiscalYear: fiscalYears.year,
     quarterName: quarters.name,
     category: categories.name,
     agency: agencies.name,
     responsible: responsiblePersons.name,
+    budgetSource: budgetSources.name,
     status: projectStatuses.name,
     statusColor: projectStatuses.color,
     createdById: projects.createdById
@@ -53,6 +56,7 @@ export default defineEventHandler(async (event) => {
   .leftJoin(categories, eq(projects.categoryId, categories.id))
   .leftJoin(agencies, eq(projects.agencyId, agencies.id))
   .leftJoin(responsiblePersons, eq(projects.responsibleId, responsiblePersons.id))
+  .leftJoin(budgetSources, eq(projects.budgetSourceId, budgetSources.id))
   .leftJoin(projectStatuses, eq(projects.statusId, projectStatuses.id))
   .where(whereClause);
 

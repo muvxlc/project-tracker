@@ -46,6 +46,34 @@ UNLOCK TABLES;
 commit;
 
 --
+-- Table structure for table `budget_sources`
+--
+
+DROP TABLE IF EXISTS `budget_sources`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `budget_sources` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `budget_sources`
+--
+
+LOCK TABLES `budget_sources` WRITE;
+/*!40000 ALTER TABLE `budget_sources` DISABLE KEYS */;
+set autocommit=0;
+INSERT INTO `budget_sources` VALUES
+(1,'งบ PP');
+/*!40000 ALTER TABLE `budget_sources` ENABLE KEYS */;
+UNLOCK TABLES;
+commit;
+
+--
 -- Table structure for table `categories`
 --
 
@@ -124,7 +152,7 @@ CREATE TABLE `project_files` (
   UNIQUE KEY `uuid` (`uuid`),
   KEY `project_files_project_id_projects_id_fk` (`project_id`),
   CONSTRAINT `project_files_project_id_projects_id_fk` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -135,13 +163,11 @@ LOCK TABLES `project_files` WRITE;
 /*!40000 ALTER TABLE `project_files` DISABLE KEYS */;
 set autocommit=0;
 INSERT INTO `project_files` VALUES
-(1,'7e205f71-2f6b-11f1-8122-7aebffb5c2a4',1,'รับสมัครนักวิชาการสาธารณสุขรายเดือนกพ69แก.pdf','/uploads/รับสมัครนักวิชาการสาธารณสุขรายเดือนกพ69แก-1775139763822.pdf',177183,'application/pdf',NULL,'2026-04-02 14:22:43'),
-(3,'7e206112-2f6b-11f1-8122-7aebffb5c2a4',1,'แบบตอบรับเข้าร่วมอบรม CTMR 8-10 เม.ย. 69.pdf','/uploads/แบบตอบรับเข้าร่วมอบรม CTMR 8-10 เม.ย. 69-1775181843239.pdf',82696,'application/pdf','แก้ 1','2026-04-03 02:04:03'),
-(4,'7e206172-2f6b-11f1-8122-7aebffb5c2a4',1,'แบบตอบรับเข้าร่วมอบรม CTMR 8-10 เม.ย. 69.docx','/uploads/แบบตอบรับเข้าร่วมอบรม CTMR 8-10 เม.ย. 69-1775182409931.docx',9373,'application/vnd.openxmlformats-officedocument.wordprocessingml.document','แก้ 2','2026-04-03 02:13:29'),
 (5,'7e2061b4-2f6b-11f1-8122-7aebffb5c2a4',4,'การเรียกเก็บ HCT ยาน้ำเสริมธาตุเหล็ก.pdf','/uploads/การเรียกเก็บ HCT ยาน้ำเสริมธาตุเหล็ก-1775204218331.pdf',2095995,'application/pdf','รับเออกสาร','2026-04-03 08:16:58'),
 (7,'7e2061f2-2f6b-11f1-8122-7aebffb5c2a4',4,'แบบตอบรับเข้าร่วมอบรม CTMR 8-10 เม.ย. 69 (1).docx','/uploads/แบบตอบรับเข้าร่วมอบรม CTMR 8-10 เม.ย. 69 (1)-1775207330876.docx',9569,'application/vnd.openxmlformats-officedocument.wordprocessingml.document','แก้ไข ครั้งที่ 2','2026-04-03 09:08:50'),
 (8,'7e206234-2f6b-11f1-8122-7aebffb5c2a4',4,'แบบรายงานผลการดำเนินงานโครงการตามแผนปฏิ.pdf','/uploads/แบบรายงานผลการดำเนินงานโครงการตามแผนปฏิ-1775215738707.pdf',207469,'application/pdf','edit 3','2026-04-03 11:28:58'),
-(9,'7e206274-2f6b-11f1-8122-7aebffb5c2a4',4,'แบบรายงานผลการดำเนินงานโครงการตามแผนปฏิ.pdf','projects/4/db9512e1-2478-4b21-ab43-78d5d9c6ed3a.pdf',207469,'application/pdf','test','2026-04-03 14:38:29');
+(9,'7e206274-2f6b-11f1-8122-7aebffb5c2a4',4,'แบบรายงานผลการดำเนินงานโครงการตามแผนปฏิ.pdf','projects/4/db9512e1-2478-4b21-ab43-78d5d9c6ed3a.pdf',207469,'application/pdf','test','2026-04-03 14:38:29'),
+(10,'57ad7559-03ba-4bef-a53e-a2430e6cc318',5,'หัวข้อประเมิน ctam.pdf','projects/5/9d7fa257-9d90-4bc9-9364-9f7f694bc646.pdf',346250,'application/pdf','test','2026-04-21 13:43:05');
 /*!40000 ALTER TABLE `project_files` ENABLE KEYS */;
 UNLOCK TABLES;
 commit;
@@ -205,6 +231,9 @@ CREATE TABLE `projects` (
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   `status_id` int(11) DEFAULT NULL,
+  `budget_source_id` int(11) DEFAULT NULL,
+  `initial_budget` decimal(15,2) DEFAULT 0.00,
+  `actual_budget` decimal(15,2) DEFAULT 0.00,
   PRIMARY KEY (`id`),
   KEY `projects_fiscal_year_id_fiscal_years_id_fk` (`fiscal_year_id`),
   KEY `projects_category_id_categories_id_fk` (`category_id`),
@@ -212,13 +241,15 @@ CREATE TABLE `projects` (
   KEY `projects_created_by_id_users_id_fk` (`created_by_id`),
   KEY `fk_projects_status_id` (`status_id`),
   KEY `fk_projects_responsible_id_responsible_persons` (`responsible_id`),
+  KEY `fk_budget_source` (`budget_source_id`),
+  CONSTRAINT `fk_budget_source` FOREIGN KEY (`budget_source_id`) REFERENCES `budget_sources` (`id`),
   CONSTRAINT `fk_projects_responsible_id_responsible_persons` FOREIGN KEY (`responsible_id`) REFERENCES `responsible_persons` (`id`),
   CONSTRAINT `fk_projects_status_id` FOREIGN KEY (`status_id`) REFERENCES `project_statuses` (`id`),
   CONSTRAINT `projects_agency_id_agencies_id_fk` FOREIGN KEY (`agency_id`) REFERENCES `agencies` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `projects_category_id_categories_id_fk` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `projects_created_by_id_users_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `users` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `projects_fiscal_year_id_fiscal_years_id_fk` FOREIGN KEY (`fiscal_year_id`) REFERENCES `fiscal_years` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -229,8 +260,8 @@ LOCK TABLES `projects` WRITE;
 /*!40000 ALTER TABLE `projects` DISABLE KEYS */;
 set autocommit=0;
 INSERT INTO `projects` VALUES
-(1,'ทดสอบ1',2,1,1,1,2,'2026-04-02',NULL,10000.00,'pending','aaa',1,'2026-04-02 08:54:46','2026-04-03 13:35:57',4),
-(4,'ทดสอบ 2',2,1,2,2,2,'2026-04-03',NULL,500000.00,'pending','esdfsdfsdfsdfssdfsd',1,'2026-04-03 08:16:53','2026-04-03 14:25:44',4);
+(4,'ทดสอบ 2',2,1,2,2,2,'2026-04-03',NULL,500000.00,'pending','esdfsdfsdfsdfssdfsd',1,'2026-04-03 08:16:53','2026-04-21 13:44:04',4,1,500000.00,450000.00),
+(5,'test2',2,1,1,1,2,'2026-04-21',NULL,20000.00,'pending','',1,'2026-04-21 13:43:04','2026-04-21 13:44:25',10,1,20000.00,19500.00);
 /*!40000 ALTER TABLE `projects` ENABLE KEYS */;
 UNLOCK TABLES;
 commit;
@@ -379,4 +410,4 @@ commit;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2026-04-03 22:48:34
+-- Dump completed on 2026-04-21 20:51:13

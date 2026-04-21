@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, decimal, date, timestamp, int, text } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, decimal, date, timestamp, int, text, json } from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
 
 export const roles = mysqlTable('roles', {
@@ -49,11 +49,6 @@ export const responsiblePersons = mysqlTable('responsible_persons', {
   name: varchar('name', { length: 255 }).notNull(),
 });
 
-export const budgetSources = mysqlTable('budget_sources', {
-  id: int('id').autoincrement().primaryKey(),
-  name: varchar('name', { length: 255 }).notNull().unique(),
-});
-
 export const projects = mysqlTable('projects', {
   id: int('id').autoincrement().primaryKey(),
   name: varchar('name', { length: 500 }).notNull(),
@@ -62,13 +57,10 @@ export const projects = mysqlTable('projects', {
   categoryId: int('category_id').notNull().references(() => categories.id),
   agencyId: int('agency_id').notNull().references(() => agencies.id),
   responsibleId: int('responsible_id').notNull().references(() => responsiblePersons.id),
-  budgetSourceId: int('budget_source_id').references(() => budgetSources.id),
   statusId: int('status_id').references(() => projectStatuses.id),
   implementationDate: date('implementation_date'),
   completionDate: date('completion_date'),
-  initialBudget: decimal('initial_budget', { precision: 15, scale: 2 }).default('0.00'),
-  actualBudget: decimal('actual_budget', { precision: 15, scale: 2 }).default('0.00'),
-  budget: decimal('budget', { precision: 15, scale: 2 }).default('0.00'), // Keep for backward compatibility/migration if needed, but we will use initialBudget
+  budget: decimal('budget', { precision: 15, scale: 2 }).default('0.00'),
   status: varchar('status', { length: 50 }).default('pending'), // DEPRECATED
   description: text('description'),
   createdById: int('created_by_id').notNull().references(() => users.id),
@@ -88,6 +80,28 @@ export const projectFiles = mysqlTable('project_files', {
   uploadedAt: timestamp('uploaded_at').defaultNow(),
 });
 
+export const apiKeys = mysqlTable('api_keys', {
+  id: int('id').autoincrement().primaryKey(),
+  key: varchar('key', { length: 255 }).notNull().unique(),
+  name: varchar('name', { length: 255 }).notNull(),
+  clientId: varchar('client_id', { length: 100 }).notNull(),
+  roleId: int('role_id').notNull().references(() => roles.id),
+  status: varchar('status', { length: 20 }).default('active'), // active, inactive
+  createdAt: timestamp('created_at').defaultNow(),
+  expiresAt: timestamp('expires_at'),
+});
+
+export const auditLogs = mysqlTable('audit_logs', {
+  id: int('id').autoincrement().primaryKey(),
+  userId: int('user_id').references(() => users.id),
+  apiKeyId: int('api_key_id').references(() => apiKeys.id),
+  action: varchar('action', { length: 100 }).notNull(),
+  module: varchar('module', { length: 100 }).notNull(),
+  details: json('details'),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one }) => ({
   role: one(roles, { fields: [users.roleId], references: [roles.id] }),
@@ -100,8 +114,16 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   category: one(categories, { fields: [projects.categoryId], references: [categories.id] }),
   agency: one(agencies, { fields: [projects.agencyId], references: [agencies.id] }),
   responsible: one(responsiblePersons, { fields: [projects.responsibleId], references: [responsiblePersons.id] }),
-  budgetSource: one(budgetSources, { fields: [projects.budgetSourceId], references: [budgetSources.id] }),
   projectStatus: one(projectStatuses, { fields: [projects.statusId], references: [projectStatuses.id] }),
   createdBy: one(users, { fields: [projects.createdById], references: [users.id] }),
   files: many(projectFiles),
+}));
+
+export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
+  role: one(roles, { fields: [apiKeys.roleId], references: [roles.id] }),
+}));
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  user: one(users, { fields: [auditLogs.userId], references: [users.id] }),
+  apiKey: one(apiKeys, { fields: [auditLogs.apiKeyId], references: [apiKeys.id] }),
 }));

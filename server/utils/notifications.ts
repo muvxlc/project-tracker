@@ -26,11 +26,15 @@ export const sendTelegramNotification = async (message: string, botToken: string
   try {
     await $fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
-      body: { chat_id: chatId, text: message }
+      body: { 
+        chat_id: chatId.toString(), 
+        text: message.replace(/\*\*/g, ''), // Strip bold for simple text or handle via HTML
+        parse_mode: 'HTML' 
+      }
     });
     console.log('[TELEGRAM] Send success');
   } catch (e: any) {
-    console.error('[TELEGRAM] Send failed:', e.message);
+    console.error('[TELEGRAM] Send failed:', e.data || e.message);
   }
 };
 

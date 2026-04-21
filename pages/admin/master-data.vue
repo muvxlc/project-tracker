@@ -16,6 +16,9 @@ const { data: statuses, refresh: refreshStatuses } = await useFetch(
 const { data: responsiblePersons, refresh: refreshResponsiblePersons } = await useFetch(
     "/api/master/responsible-persons",
 );
+const { data: budgetSources, refresh: refreshBudgetSources } = await useFetch(
+    "/api/master/budget-sources",
+);
 const { data: quarters } = await useFetch(
     "/api/master/quarters",
 );
@@ -26,6 +29,7 @@ const loading = ref({
     agency: false,
     status: false,
     responsible: false,
+    budgetSource: false,
 });
 
 // Form states
@@ -34,6 +38,7 @@ const newCategory = ref("");
 const newAgency = ref("");
 const newStatus = ref({ name: "", color: "blue", order: 0 });
 const newResponsible = ref({ name: "" });
+const newBudgetSource = ref("");
 
 // Edit states
 const editMode = ref<{ type: string; id: number | null }>({
@@ -53,7 +58,7 @@ const colorOptions = [
     { label: "เทา", value: "gray" },
 ];
 
-const addItem = async (type: "year" | "category" | "agency" | "status" | "responsible") => {
+const addItem = async (type: "year" | "category" | "agency" | "status" | "responsible" | "budgetSource") => {
     const values = {
         year: {
             val: newYear.value,
@@ -85,6 +90,12 @@ const addItem = async (type: "year" | "category" | "agency" | "status" | "respon
             body: newResponsible.value,
             refresh: refreshResponsiblePersons,
         },
+        budgetSource: {
+            val: newBudgetSource.value,
+            api: "/api/master/budget-sources",
+            body: { name: newBudgetSource.value },
+            refresh: refreshBudgetSources,
+        },
     };
 
     const item = values[type];
@@ -101,6 +112,7 @@ const addItem = async (type: "year" | "category" | "agency" | "status" | "respon
         else if (type === "year") newYear.value = "";
         else if (type === "category") newCategory.value = "";
         else if (type === "agency") newAgency.value = "";
+        else if (type === "budgetSource") newBudgetSource.value = "";
 
         await item.refresh();
         toast.add({
@@ -151,6 +163,7 @@ const saveEdit = async (refreshFn: any) => {
         else if (editMode.value.type === "agency") typeSlug = "agencies";
         else if (editMode.value.type === "status") typeSlug = "statuses";
         else if (editMode.value.type === "responsible") typeSlug = "responsible-persons";
+        else if (editMode.value.type === "budgetSource") typeSlug = "budget-sources";
 
         await $fetch(`/api/master/${typeSlug}/${editMode.value.id}`, {
             method: "PATCH",
@@ -690,6 +703,95 @@ const getBadgeClass = (color: string) => {
                                             'responsible-persons',
                                             r.id,
                                             refreshResponsiblePersons,
+                                        )
+                                    "
+                                />
+                            </div>
+                        </template>
+                    </li>
+                </ul>
+            </UCard>
+
+            <!-- 7. แหล่งที่มางบประมาณ (New) -->
+            <UCard>
+                <template #header
+                    ><div
+                        class="font-bold flex items-center gap-2 text-lg text-primary"
+                    >
+                        <UIcon name="i-heroicons-banknotes" />แหล่งที่มาของงบประมาณ
+                    </div></template
+                >
+                <div class="flex gap-2 mb-6">
+                    <UInput
+                        v-model="newBudgetSource"
+                        placeholder="ระบุแหล่งที่มาของงบประมาณ"
+                        class="flex-1"
+                        size="lg"
+                    />
+                    <UButton
+                        label="เพิ่ม"
+                        :loading="loading.budgetSource"
+                        @click="addItem('budgetSource')"
+                        size="lg"
+                    />
+                </div>
+                <ul
+                    class="divide-y divide-gray-100 dark:divide-gray-800 max-h-80 overflow-y-auto pr-2"
+                >
+                    <li
+                        v-for="bs in budgetSources"
+                        :key="bs.id"
+                        class="py-3 flex justify-between items-center group px-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                    >
+                        <template
+                            v-if="
+                                editMode.type === 'budgetSource' &&
+                                editMode.id === bs.id
+                            "
+                        >
+                            <UInput
+                                v-model="editValue.name"
+                                class="flex-1 mr-2"
+                            />
+                            <div class="flex gap-1">
+                                <UButton
+                                    icon="i-heroicons-check"
+                                    size="sm"
+                                    color="green"
+                                    @click="saveEdit(refreshBudgetSources)"
+                                />
+                                <UButton
+                                    icon="i-heroicons-x-mark"
+                                    size="sm"
+                                    color="gray"
+                                    @click="editMode = { type: '', id: null }"
+                                />
+                            </div>
+                        </template>
+                        <template v-else>
+                            <span class="text-lg font-medium">{{
+                                bs.name
+                            }}</span>
+                            <div
+                                class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                                <UButton
+                                    icon="i-heroicons-pencil"
+                                    size="sm"
+                                    variant="ghost"
+                                    color="blue"
+                                    @click="startEdit('budgetSource', bs)"
+                                />
+                                <UButton
+                                    icon="i-heroicons-trash"
+                                    size="sm"
+                                    variant="ghost"
+                                    color="red"
+                                    @click="
+                                        deleteItem(
+                                            'budget-sources',
+                                            bs.id,
+                                            refreshBudgetSources,
                                         )
                                     "
                                 />

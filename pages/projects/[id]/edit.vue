@@ -10,6 +10,7 @@ const { data: quarters } = await useAsyncData('quarters', () => $fetch('/api/mas
 const { data: categories } = await useAsyncData('categories', () => $fetch('/api/master/categories'));
 const { data: agencies } = await useAsyncData('agencies', () => $fetch('/api/master/agencies'));
 const { data: responsiblePersons } = await useAsyncData('responsible_persons', () => $fetch('/api/master/responsible-persons'));
+const { data: budgetSources } = await useAsyncData('budget_sources', () => $fetch('/api/master/budget-sources'));
 const { data: statuses } = await useAsyncData('project_statuses', () => $fetch('/api/master/statuses'));
 
 const form = ref({
@@ -19,23 +20,56 @@ const form = ref({
   categoryId: '' as any,
   agencyId: '' as any,
   responsibleId: '' as any,
+  budgetSourceId: '' as any,
   statusId: '' as any,
   implementationDate: null as any,
   completionDate: null as any,
+  initialBudget: 0,
+  actualBudget: 0,
   budget: 0,
   description: ''
 });
 
+const displayInitialBudget = ref('0');
+const displayActualBudget = ref('0');
+
+const formatNumber = (val: string | number) => {
+  if (val === undefined || val === null || val === '') return '';
+  const s = val.toString().replace(/,/g, '');
+  if (isNaN(Number(s))) return '';
+  const parts = s.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+};
+
+const onInitialBudgetInput = (e: any) => {
+  const input = e.target.value.replace(/[^0-9.]/g, '');
+  const parts = input.split('.');
+  const sanitized = parts[0] + (parts.length > 1 ? '.' + parts.slice(1).join('').substring(0, 2) : '');
+  
+  form.value.initialBudget = Number(sanitized) || 0;
+  displayInitialBudget.value = formatNumber(sanitized);
+};
+
+const onActualBudgetInput = (e: any) => {
+  const input = e.target.value.replace(/[^0-9.]/g, '');
+  const parts = input.split('.');
+  const sanitized = parts[0] + (parts.length > 1 ? '.' + parts.slice(1).join('').substring(0, 2) : '');
+  
+  form.value.actualBudget = Number(sanitized) || 0;
+  displayActualBudget.value = formatNumber(sanitized);
+};
+
 const selectedStatusName = computed(() => {
-  if (!statuses.value || !form.value.statusId) return '';
-  const found = (statuses.value as any[]).find(s => s.id === Number(form.value.statusId));
+  const statusList = toValue(statuses);
+  if (!statusList || !form.value.statusId) return '';
+  const found = (statusList as any[]).find(s => s.id === Number(form.value.statusId));
   return found ? found.name : '';
 });
 
 // Watch for project data and populate form
 watch(project, (newVal) => {
   if (newVal) {
-    console.log('[DEBUG] Populating form with:', newVal);
     form.value = {
       name: newVal.name || '',
       fiscalYearId: newVal.fiscalYearId || '',
@@ -43,12 +77,17 @@ watch(project, (newVal) => {
       categoryId: newVal.categoryId || '',
       agencyId: newVal.agencyId || '',
       responsibleId: newVal.responsibleId || '',
+      budgetSourceId: newVal.budgetSourceId || '',
       statusId: newVal.statusId || '',
       implementationDate: newVal.implementationDate ? newVal.implementationDate.split('T')[0] : null,
       completionDate: newVal.completionDate ? newVal.completionDate.split('T')[0] : null,
+      initialBudget: Number(newVal.initialBudget) || Number(newVal.budget) || 0,
+      actualBudget: Number(newVal.actualBudget) || 0,
       budget: Number(newVal.budget) || 0,
       description: newVal.description || ''
     };
+    displayInitialBudget.value = formatNumber(form.value.initialBudget.toString());
+    displayActualBudget.value = formatNumber(form.value.actualBudget.toString());
   }
 }, { immediate: true });
 
@@ -126,9 +165,12 @@ const updateProject = async () => {
         categoryId: Number(form.value.categoryId),
         agencyId: Number(form.value.agencyId),
         responsibleId: Number(form.value.responsibleId),
+        budgetSourceId: form.value.budgetSourceId ? Number(form.value.budgetSourceId) : null,
         statusId: Number(form.value.statusId),
         completionDate: selectedStatusName.value === 'ดำเนินการเสร็จสิ้น' ? form.value.completionDate : null,
-        budget: form.value.budget.toString()
+        initialBudget: form.value.initialBudget.toString(),
+        actualBudget: form.value.actualBudget.toString(),
+        budget: form.value.initialBudget.toString()
       }
     });
 
@@ -220,16 +262,55 @@ const updateProject = async () => {
             </select>
           </UFormField>
 
-          <UFormField label="วันที่ดำเนินการ" required>
-            <UInput v-model="form.implementationDate" type="date" required icon="i-heroicons-calendar-days" />
+          <UFormField label="แหล่งที่มาของงบประมาณ">
+            <select v-model="form.budgetSourceId" class="w-full h-10 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary focus:outline-none">
+              <option value="">-- เลือกแหล่งที่มาของงบประมาณ --</option>
+              <option v-for="bs in (budgetSources as any[])" :key="bs.id" :value="bs.id">{{ bs.name }}</option>
+            </select>
           </UFormField>
 
-          <UFormField v-if="selectedStatusName === 'ดำเนินการเสร็จสิ้น'" label="วันที่เสร็จสิ้น" required>
-            <UInput v-model="form.completionDate" type="date" required icon="i-heroicons-calendar-check" />
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
+            <UFormField label="วันที่ดำเนินการ" required>
+              <UInput v-model="form.implementationDate" type="date" required icon="i-heroicons-calendar-days" />
+            </UFormField>
+
+            <UFormField label="วันที่เสร็จสิ้นโครงการ">
+              <UInput 
+                v-model="form.completionDate" 
+                type="date" 
+                icon="i-heroicons-calendar-days" 
+                class="bg-green-100/50 dark:bg-green-900/30 rounded-md"
+                :ui="{ 
+                  base: '!bg-green-100/30 dark:!bg-green-900/20 border-green-300 dark:border-green-800 focus:ring-green-500',
+                  icon: { leading: { wrapper: 'text-green-600' } }
+                }"
+              />
+            </UFormField>
+          </div>
+
+          <UFormField label="งบประมาณตั้งต้น (บาท)" required>
+            <UInput 
+              v-model="displayInitialBudget" 
+              @update:model-value="(val) => {
+                const sanitized = val.replace(/[^0-9.]/g, '');
+                form.initialBudget = Number(sanitized) || 0;
+                displayInitialBudget = formatNumber(sanitized);
+              }"
+              required 
+              icon="i-heroicons-banknotes" 
+            />
           </UFormField>
 
-          <UFormField label="งบประมาณ (บาท)" required>
-            <UInput v-model="form.budget" type="number" step="0.01" required icon="i-heroicons-banknotes" />
+          <UFormField label="งบประมาณที่ใช้จริง (บาท)">
+            <UInput 
+              v-model="displayActualBudget" 
+              @update:model-value="(val) => {
+                const sanitized = val.replace(/[^0-9.]/g, '');
+                form.actualBudget = Number(sanitized) || 0;
+                displayActualBudget = formatNumber(sanitized);
+              }"
+              icon="i-heroicons-banknotes" 
+            />
           </UFormField>
 
           <UFormField label="รายละเอียดเพิ่มเติม" class="md:col-span-2">

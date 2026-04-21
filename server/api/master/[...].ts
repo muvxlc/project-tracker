@@ -1,5 +1,5 @@
 import { db } from '../../utils/db';
-import { fiscalYears, categories, agencies, projectStatuses, quarters, responsiblePersons } from '../../database/schema';
+import { fiscalYears, categories, agencies, projectStatuses, quarters, responsiblePersons, budgetSources } from '../../database/schema';
 import { eq, desc, asc, sql } from 'drizzle-orm';
 import { verifyToken } from '../../utils/auth';
 
@@ -28,6 +28,7 @@ export default defineEventHandler(async (event) => {
   else if (type === 'statuses') table = projectStatuses;
   else if (type === 'quarters') table = quarters;
   else if (type === 'responsible-persons') table = responsiblePersons;
+  else if (type === 'budget-sources') table = budgetSources;
   else throw createError({ statusCode: 404, statusMessage: `Resource ${type} not found` });
 
   // 1. GET - ดึงข้อมูล
@@ -44,7 +45,7 @@ export default defineEventHandler(async (event) => {
     let values: any = {};
 
     if (type === 'fiscal-years') values = { year: Number(body.year) };
-    else if (type === 'categories' || type === 'agencies' || type === 'responsible-persons') values = { name: body.name };
+    else if (type === 'categories' || type === 'agencies' || type === 'responsible-persons' || type === 'budget-sources') values = { name: body.name };
     else if (type === 'statuses') {
       let finalOrder = body.order ? Number(body.order) : 0;
       if (!finalOrder) {
@@ -73,7 +74,7 @@ export default defineEventHandler(async (event) => {
     let updateValues: any = {};
 
     if (type === 'fiscal-years') updateValues = { year: Number(body.year) };
-    else if (type === 'categories' || type === 'agencies' || type === 'responsible-persons') updateValues = { name: body.name };
+    else if (type === 'categories' || type === 'agencies' || type === 'responsible-persons' || type === 'budget-sources') updateValues = { name: body.name };
     else if (type === 'statuses') {
       updateValues = { name: body.name, color: body.color, order: Number(body.order) };
     } else if (type === 'quarters') {

@@ -49,10 +49,13 @@ export default defineEventHandler(async (event) => {
     categoryId: Number(body.categoryId),
     agencyId: Number(body.agencyId),
     responsibleId: Number(body.responsibleId),
+    budgetSourceId: body.budgetSourceId ? Number(body.budgetSourceId) : null,
     statusId: newStatusId,
     implementationDate: body.implementationDate,
     completionDate: body.completionDate,
-    budget: body.budget.toString(),
+    initialBudget: body.initialBudget?.toString() || body.budget?.toString() || '0.00',
+    actualBudget: body.actualBudget?.toString() || '0.00',
+    budget: body.budget?.toString() || body.initialBudget?.toString() || '0.00',
     description: body.description
   }).where(eq(projects.id, id));
 

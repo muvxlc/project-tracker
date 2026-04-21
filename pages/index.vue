@@ -80,6 +80,23 @@ const canEdit = (project: any) => {
     return project.createdById === user.value.id;
 };
 
+const canDelete = () => {
+    if (!user.value) return false;
+    return ["superadmin", "admin"].includes(user.value.role);
+};
+
+const deleteProject = async (id: number) => {
+    if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบโครงการนี้? ข้อมูลไฟล์แนบทั้งหมดจะถูกลบออกด้วย")) return;
+    
+    try {
+        await $fetch(`/api/projects/${id}`, { method: 'DELETE' });
+        useToast().add({ title: 'สำเร็จ', description: 'ลบโครงการเรียบร้อยแล้ว', color: 'success' });
+        await Promise.all([refreshProjects(), refreshStats()]);
+    } catch (e: any) {
+        useToast().add({ title: 'เกิดข้อผิดพลาด', description: 'ไม่สามารถลบโครงการได้', color: 'error' });
+    }
+};
+
 const columns = [
     { accessorKey: "fiscalYear", header: "ปีงบฯ" },
     { accessorKey: "quarterName", header: "ไตรมาส" },
@@ -87,7 +104,7 @@ const columns = [
     { accessorKey: "name", header: "ชื่อแผนงาน-โครงการ" },
     { accessorKey: "agency", header: "กลุ่มงาน" },
     { accessorKey: "responsible", header: "ผู้รับผิดชอบ" },
-    { accessorKey: "budget", header: "งบประมาณ" },
+    { accessorKey: "actualBudget", header: "งบฯ ที่ใช้จริง" },
     { accessorKey: "status", header: "สถานะ" },
     { accessorKey: "actions", header: "" },
 ];
@@ -164,73 +181,75 @@ const iconMap: Record<string, string> = {
             </div>
 
             <!-- Dashboard Cards -->
-            <div
-                v-if="stats"
-                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
-            >
-                <!-- Total Card -->
-                <UCard class="border-l-4 border-l-blue-500 shadow-sm">
-                    <div class="flex items-center gap-4">
-                        <div
-                            class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full"
-                        >
-                            <UIcon
-                                name="i-heroicons-clipboard-document-list"
-                                class="w-6 h-6 text-blue-600"
-                            />
-                        </div>
-                        <div>
-                            <div
-                                class="text-sm text-gray-500 dark:text-gray-400 font-medium"
-                            >
-                                จำนวนแผนงาน โครงการทั้งหมด
-                            </div>
-                            <div class="text-2xl font-bold">
-                                {{ totalProjectsCount }}
-                            </div>
-                        </div>
-                    </div>
-                </UCard>
-
-                <!-- Dynamic Status Cards -->
-                <UCard
-                    v-for="s in stats.statusStats"
-                    :key="s.status"
-                    :class="[
-                        'border-l-4 shadow-sm',
-                        borderMap[s.color] || 'border-l-gray-500',
-                    ]"
+            <ClientOnly>
+                <div
+                    v-if="stats"
+                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
                 >
-                    <div class="flex items-center gap-4">
-                        <div
-                            :class="[
-                                'p-3 rounded-full',
-                                bgMap[s.color] ||
-                                    'bg-gray-100 dark:bg-gray-900/30',
-                            ]"
-                        >
-                            <UIcon
-                                :name="
-                                    iconMap[s.status] ||
-                                    'i-heroicons-document-text'
-                                "
-                                :class="[
-                                    'w-6 h-6',
-                                    textMap[s.color] || 'text-gray-600',
-                                ]"
-                            />
-                        </div>
-                        <div>
+                    <!-- Total Card -->
+                    <UCard class="border-l-4 border-l-blue-500 shadow-sm">
+                        <div class="flex items-center gap-4">
                             <div
-                                class="text-sm text-gray-500 dark:text-gray-400 font-medium"
+                                class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full"
                             >
-                                {{ s.status }}
+                                <UIcon
+                                    name="i-heroicons-clipboard-document-list"
+                                    class="w-6 h-6 text-blue-600"
+                                />
                             </div>
-                            <div class="text-2xl font-bold">{{ s.count }}</div>
+                            <div>
+                                <div
+                                    class="text-sm text-gray-500 dark:text-gray-400 font-medium"
+                                >
+                                    จำนวนแผนงาน โครงการทั้งหมด
+                                </div>
+                                <div class="text-2xl font-bold">
+                                    {{ totalProjectsCount }}
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </UCard>
-            </div>
+                    </UCard>
+
+                    <!-- Dynamic Status Cards -->
+                    <UCard
+                        v-for="s in stats.statusStats"
+                        :key="s.status"
+                        :class="[
+                            'border-l-4 shadow-sm',
+                            borderMap[s.color] || 'border-l-gray-500',
+                        ]"
+                    >
+                        <div class="flex items-center gap-4">
+                            <div
+                                :class="[
+                                    'p-3 rounded-full',
+                                    bgMap[s.color] ||
+                                        'bg-gray-100 dark:bg-gray-900/30',
+                                ]"
+                            >
+                                <UIcon
+                                    :name="
+                                        iconMap[s.status] ||
+                                        'i-heroicons-document-text'
+                                    "
+                                    :class="[
+                                        'w-6 h-6',
+                                        textMap[s.color] || 'text-gray-600',
+                                    ]"
+                                />
+                            </div>
+                            <div>
+                                <div
+                                    class="text-sm text-gray-500 dark:text-gray-400 font-medium"
+                                >
+                                    {{ s.status }}
+                                </div>
+                                <div class="text-2xl font-bold">{{ s.count }}</div>
+                            </div>
+                        </div>
+                    </UCard>
+                </div>
+            </ClientOnly>
 
             <!-- Filters & Project List -->
             <UCard>
@@ -248,62 +267,64 @@ const iconMap: Record<string, string> = {
                                 icon="i-heroicons-magnifying-glass"
                                 class="w-full md:w-64"
                             />
-
-                            <select
-                                v-model="filters.fiscalYearId"
-                                class="h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary"
-                            >
-                                <option value="">ทุกปีงบประมาณ</option>
-                                <option
-                                    v-for="y in years as any[]"
-                                    :key="y.id"
-                                    :value="y.id"
+                            
+                            <ClientOnly>
+                                <select
+                                    v-model="filters.fiscalYearId"
+                                    class="h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary"
                                 >
-                                    {{ y.year }}
-                                </option>
-                            </select>
+                                    <option value="">ทุกปีงบประมาณ</option>
+                                    <option
+                                        v-for="y in years as any[]"
+                                        :key="y.id"
+                                        :value="y.id"
+                                    >
+                                        {{ y.year }}
+                                    </option>
+                                </select>
 
-                            <select
-                                v-model="filters.agencyId"
-                                class="h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary"
-                            >
-                                <option value="">ทุกกลุ่มงาน</option>
-                                <option
-                                    v-for="a in agencies as any[]"
-                                    :key="a.id"
-                                    :value="a.id"
+                                <select
+                                    v-model="filters.agencyId"
+                                    class="h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary"
                                 >
-                                    {{ a.name }}
-                                </option>
-                            </select>
+                                    <option value="">ทุกกลุ่มงาน</option>
+                                    <option
+                                        v-for="a in agencies as any[]"
+                                        :key="a.id"
+                                        :value="a.id"
+                                    >
+                                        {{ a.name }}
+                                    </option>
+                                </select>
 
-                            <select
-                                v-model="filters.categoryId"
-                                class="h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary"
-                            >
-                                <option value="">ทุกประเภท</option>
-                                <option
-                                    v-for="c in categories as any[]"
-                                    :key="c.id"
-                                    :value="c.id"
+                                <select
+                                    v-model="filters.categoryId"
+                                    class="h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary"
                                 >
-                                    {{ c.name }}
-                                </option>
-                            </select>
+                                    <option value="">ทุกประเภท</option>
+                                    <option
+                                        v-for="c in categories as any[]"
+                                        :key="c.id"
+                                        :value="c.id"
+                                    >
+                                        {{ c.name }}
+                                    </option>
+                                </select>
 
-                            <select
-                                v-model="filters.statusId"
-                                class="h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary"
-                            >
-                                <option value="">ทุกสถานะ</option>
-                                <option
-                                    v-for="s in statuses as any[]"
-                                    :key="s.id"
-                                    :value="s.id"
+                                <select
+                                    v-model="filters.statusId"
+                                    class="h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary"
                                 >
-                                    {{ s.name }}
-                                </option>
-                            </select>
+                                    <option value="">ทุกสถานะ</option>
+                                    <option
+                                        v-for="s in statuses as any[]"
+                                        :key="s.id"
+                                        :value="s.id"
+                                    >
+                                        {{ s.name }}
+                                    </option>
+                                </select>
+                            </ClientOnly>
 
                             <UButton
                                 variant="ghost"
@@ -323,81 +344,111 @@ const iconMap: Record<string, string> = {
                     </div>
                 </template>
 
-                <UTable
-                    :data="projects || []"
-                    :columns="columns"
-                    class="w-full"
-                >
-                    <template #budget-cell="{ row }">
-                        <span class="font-medium">{{
-                            formatBudget(row.original.budget)
-                        }}</span>
-                    </template>
+                <ClientOnly>
+                    <UTable
+                        :data="projects || []"
+                        :columns="columns"
+                        class="w-full"
+                    >
+                        <template #actualBudget-cell="{ row }">
+                            <span class="font-medium">{{
+                                formatBudget(row.original.actualBudget || row.original.budget || 0)
+                            }}</span>
+                        </template>
 
-                    <template #status-cell="{ row }">
-                        <div
-                            :class="[
-                                colorMap[row.original.statusColor] ||
-                                    'bg-blue-600',
-                                'px-2 py-0.5 rounded text-[10px] text-white font-bold inline-block whitespace-nowrap',
-                            ]"
-                        >
-                            {{ row.original.status }}
-                        </div>
-                    </template>
+                        <template #status-cell="{ row }">
+                            <div
+                                :class="[
+                                    colorMap[row.original.statusColor] ||
+                                        'bg-blue-600',
+                                    'px-2 py-0.5 rounded text-[10px] text-white font-bold inline-block whitespace-nowrap',
+                                ]"
+                            >
+                                {{ row.original.status }}
+                            </div>
+                        </template>
 
-                    <template #actions-cell="{ row }">
-                        <UButton
-                            v-if="canEdit(row.original)"
-                            icon="i-heroicons-pencil-square"
-                            size="xs"
-                            color="blue"
-                            variant="ghost"
-                            label="แก้ไข"
-                            :to="`/projects/${row.original.id}/edit`"
-                        />
-                    </template>
-                </UTable>
+                        <template #actions-cell="{ row }">
+                            <div class="flex gap-1">
+                                <UButton
+                                    v-if="canEdit(row.original)"
+                                    icon="i-heroicons-pencil-square"
+                                    size="xs"
+                                    color="blue"
+                                    variant="ghost"
+                                    label="แก้ไข"
+                                    :to="`/projects/${row.original.id}/edit`"
+                                />
+                                <UButton
+                                    v-if="canDelete()"
+                                    icon="i-heroicons-trash"
+                                    size="xs"
+                                    color="red"
+                                    variant="ghost"
+                                    label="ลบ"
+                                    @click="deleteProject(row.original.id)"
+                                />
+                            </div>
+                        </template>
+                    </UTable>
 
-                <div
-                    v-if="!projects?.length"
-                    class="text-center py-12 text-gray-400"
-                >
-                    ไม่พบข้อมูลตามเงื่อนไขที่ระบุ
-                </div>
-            </UCard>
-
-            <!-- Overall Budget (Summary Footer) -->
-            <UCard
-                class="bg-blue-600 text-white border-none shadow-md overflow-hidden relative"
-            >
-                <div
-                    class="relative z-10 flex justify-between items-center px-4"
-                >
-                    <div>
-                        <div
-                            class="text-sm text-blue-100 font-bold uppercase tracking-wider"
-                        >
-                            งบประมาณรวมจากโครงการที่แสดง
-                        </div>
-                        <div class="text-3xl font-black mt-1">
-                            {{
-                                formatBudget(
-                                    projects?.reduce(
-                                        (acc, curr) =>
-                                            acc + Number(curr.budget),
-                                        0,
-                                    ) || 0,
-                                )
-                            }}
-                        </div>
+                    <div
+                        v-if="!projects?.length"
+                        class="text-center py-12 text-gray-400"
+                    >
+                        ไม่พบข้อมูลตามเงื่อนไขที่ระบุ
                     </div>
-                    <UIcon
-                        name="i-heroicons-banknotes"
-                        class="w-16 h-16 text-white/20"
-                    />
-                </div>
+                </ClientOnly>
             </UCard>
+
+            <!-- Budget Summary Cards -->
+            <ClientOnly>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Initial Budget Card -->
+                    <UCard class="bg-blue-600 text-white border-none shadow-md overflow-hidden relative">
+                        <div class="relative z-10 flex justify-between items-center px-4 py-2">
+                            <div>
+                                <div class="text-[10px] text-blue-100 font-bold uppercase tracking-wider opacity-80">
+                                    งบประมาณตั้งต้นรวม
+                                </div>
+                                <div class="text-2xl font-black mt-0.5">
+                                    {{
+                                        formatBudget(
+                                            projects?.reduce(
+                                                (acc, curr) => acc + Number(curr.initialBudget || curr.budget || 0),
+                                                0
+                                            ) || 0
+                                        )
+                                    }}
+                                </div>
+                            </div>
+                            <UIcon name="i-heroicons-banknotes" class="w-12 h-12 text-white/20" />
+                        </div>
+                    </UCard>
+
+                    <!-- Actual Budget Card -->
+                    <UCard class="bg-green-600 text-white border-none shadow-md overflow-hidden relative">
+                        <div class="relative z-10 flex justify-between items-center px-4 py-2">
+                            <div>
+                                <div class="text-[10px] text-green-100 font-bold uppercase tracking-wider opacity-80">
+                                    งบประมาณที่ใช้จริงรวม
+                                </div>
+                                <div class="text-2xl font-black mt-0.5">
+                                    {{
+                                        formatBudget(
+                                            projects?.reduce(
+                                                (acc, curr) => acc + Number(curr.actualBudget || 0),
+                                                0
+                                            ) || 0
+                                        )
+                                    }}
+                                </div>
+                            </div>
+                            <UIcon name="i-heroicons-check-circle" class="w-12 h-12 text-white/20" />
+                        </div>
+                    </UCard>
+                </div>
+            </ClientOnly>
         </div>
 
         <!-- Public Landing Page -->

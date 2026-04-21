@@ -27,6 +27,9 @@ export default defineEventHandler(async (event) => {
     implementationDate,
     completionDate,
     budget,
+    initialBudget,
+    actualBudget,
+    budgetSourceId,
     description
   } = body;
 
@@ -37,10 +40,13 @@ export default defineEventHandler(async (event) => {
     categoryId: Number(categoryId),
     agencyId: Number(agencyId),
     responsibleId: Number(responsibleId),
+    budgetSourceId: budgetSourceId ? Number(budgetSourceId) : null,
     statusId: Number(statusId),
     implementationDate,
     completionDate,
-    budget: budget.toString(),
+    initialBudget: initialBudget?.toString() || budget?.toString() || '0.00',
+    actualBudget: actualBudget?.toString() || '0.00',
+    budget: budget?.toString() || initialBudget?.toString() || '0.00',
     description,
     createdById: Number(user.id)
   });
