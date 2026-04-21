@@ -86,14 +86,27 @@ const canDelete = () => {
 };
 
 const deleteProject = async (id: number) => {
-    if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบโครงการนี้? ข้อมูลไฟล์แนบทั้งหมดจะถูกลบออกด้วย")) return;
-    
+    if (
+        !confirm(
+            "คุณแน่ใจหรือไม่ว่าต้องการลบโครงการนี้? ข้อมูลไฟล์แนบทั้งหมดจะถูกลบออกด้วย",
+        )
+    )
+        return;
+
     try {
-        await $fetch(`/api/projects/${id}`, { method: 'DELETE' });
-        useToast().add({ title: 'สำเร็จ', description: 'ลบโครงการเรียบร้อยแล้ว', color: 'success' });
+        await $fetch(`/api/projects/${id}`, { method: "DELETE" });
+        useToast().add({
+            title: "สำเร็จ",
+            description: "ลบโครงการเรียบร้อยแล้ว",
+            color: "success",
+        });
         await Promise.all([refreshProjects(), refreshStats()]);
     } catch (e: any) {
-        useToast().add({ title: 'เกิดข้อผิดพลาด', description: 'ไม่สามารถลบโครงการได้', color: 'error' });
+        useToast().add({
+            title: "เกิดข้อผิดพลาด",
+            description: "ไม่สามารถลบโครงการได้",
+            color: "error",
+        });
     }
 };
 
@@ -244,7 +257,9 @@ const iconMap: Record<string, string> = {
                                 >
                                     {{ s.status }}
                                 </div>
-                                <div class="text-2xl font-bold">{{ s.count }}</div>
+                                <div class="text-2xl font-bold">
+                                    {{ s.count }}
+                                </div>
                             </div>
                         </div>
                     </UCard>
@@ -267,7 +282,7 @@ const iconMap: Record<string, string> = {
                                 icon="i-heroicons-magnifying-glass"
                                 class="w-full md:w-64"
                             />
-                            
+
                             <ClientOnly>
                                 <select
                                     v-model="filters.fiscalYearId"
@@ -352,8 +367,27 @@ const iconMap: Record<string, string> = {
                     >
                         <template #actualBudget-cell="{ row }">
                             <span class="font-medium">{{
-                                formatBudget(row.original.actualBudget || row.original.budget || 0)
+                                formatBudget(
+                                    row.original.actualBudget ||
+                                        row.original.budget ||
+                                        0,
+                                )
                             }}</span>
+                        </template>
+
+                        <!-- <template #name-cell="{ row }">
+                            <div class="min-w-[300px] max-w-[500px] whitespace-normal break-words leading-relaxed py-1">
+                                {{ row.original.name }}
+                            </div>
+                        </template> -->
+                        <template #name-cell="{ row }">
+                            <div class="min-w-0 max-w-[400px]">
+                                <div
+                                    class="break-all whitespace-normal leading-relaxed"
+                                >
+                                    {{ row.original.name }}
+                                </div>
+                            </div>
                         </template>
 
                         <template #status-cell="{ row }">
@@ -405,46 +439,74 @@ const iconMap: Record<string, string> = {
             <ClientOnly>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Initial Budget Card -->
-                    <UCard class="bg-blue-600 text-white border-none shadow-md overflow-hidden relative">
-                        <div class="relative z-10 flex justify-between items-center px-4 py-2">
+                    <UCard
+                        class="bg-blue-600 text-white border-none shadow-md overflow-hidden relative"
+                    >
+                        <div
+                            class="relative z-10 flex justify-between items-center px-4 py-2"
+                        >
                             <div>
-                                <div class="text-[10px] text-blue-100 font-bold uppercase tracking-wider opacity-80">
+                                <div
+                                    class="text-2xl text-blue-100 font-bold uppercase tracking-wider opacity-90"
+                                >
                                     งบประมาณตั้งต้นรวม
                                 </div>
-                                <div class="text-2xl font-black mt-0.5">
+                                <div class="text-4xl font-black mt-1">
                                     {{
                                         formatBudget(
                                             projects?.reduce(
-                                                (acc, curr) => acc + Number(curr.initialBudget || curr.budget || 0),
-                                                0
-                                            ) || 0
+                                                (acc, curr) =>
+                                                    acc +
+                                                    Number(
+                                                        curr.initialBudget ||
+                                                            curr.budget ||
+                                                            0,
+                                                    ),
+                                                0,
+                                            ) || 0,
                                         )
                                     }}
                                 </div>
                             </div>
-                            <UIcon name="i-heroicons-banknotes" class="w-12 h-12 text-white/20" />
+                            <UIcon
+                                name="i-heroicons-banknotes"
+                                class="w-16 h-16 text-white/20"
+                            />
                         </div>
                     </UCard>
 
                     <!-- Actual Budget Card -->
-                    <UCard class="bg-green-600 text-white border-none shadow-md overflow-hidden relative">
-                        <div class="relative z-10 flex justify-between items-center px-4 py-2">
+                    <UCard
+                        class="bg-green-600 text-white border-none shadow-md overflow-hidden relative"
+                    >
+                        <div
+                            class="relative z-10 flex justify-between items-center px-4 py-4"
+                        >
                             <div>
-                                <div class="text-[10px] text-green-100 font-bold uppercase tracking-wider opacity-80">
+                                <div
+                                    class="text-2xl text-green-100 font-bold uppercase tracking-wider opacity-90"
+                                >
                                     งบประมาณที่ใช้จริงรวม
                                 </div>
-                                <div class="text-2xl font-black mt-0.5">
+                                <div class="text-4xl font-black mt-1">
                                     {{
                                         formatBudget(
                                             projects?.reduce(
-                                                (acc, curr) => acc + Number(curr.actualBudget || 0),
-                                                0
-                                            ) || 0
+                                                (acc, curr) =>
+                                                    acc +
+                                                    Number(
+                                                        curr.actualBudget || 0,
+                                                    ),
+                                                0,
+                                            ) || 0,
                                         )
                                     }}
                                 </div>
                             </div>
-                            <UIcon name="i-heroicons-check-circle" class="w-12 h-12 text-white/20" />
+                            <UIcon
+                                name="i-heroicons-check-circle"
+                                class="w-16 h-16 text-white/20"
+                            />
                         </div>
                     </UCard>
                 </div>
@@ -483,8 +545,7 @@ const iconMap: Record<string, string> = {
                             />
                             <span
                                 class="font-bold text-lg text-gray-900 dark:text-white"
-                                >ความปลอดภัยสูง</span
-                            >
+                            ></span>
                         </div>
                     </template>
                     รองรับการจัดการสิทธิ์ (RBAC) และการเข้าใช้งานผ่าน ThaiID
