@@ -5,6 +5,7 @@ import { sql, eq, and, asc, like } from 'drizzle-orm';
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const fiscalYearId = query.fiscalYearId ? Number(query.fiscalYearId) : null;
+  const quarterId = query.quarterId ? Number(query.quarterId) : null;
   const agencyId = query.agencyId ? Number(query.agencyId) : null;
   const categoryId = query.categoryId ? Number(query.categoryId) : null;
   const statusId = query.statusId ? Number(query.statusId) : null;
@@ -12,6 +13,7 @@ export default defineEventHandler(async (event) => {
 
   const conditions = [];
   if (fiscalYearId && !isNaN(fiscalYearId)) conditions.push(eq(projects.fiscalYearId, fiscalYearId));
+  if (quarterId && !isNaN(quarterId)) conditions.push(eq(projects.quarterId, quarterId));
   if (agencyId && !isNaN(agencyId)) conditions.push(eq(projects.agencyId, agencyId));
   if (categoryId && !isNaN(categoryId)) conditions.push(eq(projects.categoryId, categoryId));
   if (statusId && !isNaN(statusId)) conditions.push(eq(projects.statusId, statusId));

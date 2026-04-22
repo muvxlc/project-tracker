@@ -3,12 +3,14 @@ const { user } = useUser();
 
 // Master data for filters
 const { data: years } = await useFetch("/api/master/fiscal-years");
+const { data: quartersMaster } = await useFetch("/api/master/quarters");
 const { data: agencies } = await useFetch("/api/master/agencies");
 const { data: categories } = await useFetch("/api/master/categories");
 const { data: statuses } = await useFetch("/api/master/statuses");
 
 const filters = ref({
     fiscalYearId: "",
+    quarterId: "",
     agencyId: "",
     categoryId: "",
     statusId: "",
@@ -23,6 +25,7 @@ const { data: stats, refresh: refreshStats } = await useAsyncData(
         return await $fetch("/api/projects/stats", {
             params: {
                 fiscalYearId: filters.value.fiscalYearId || undefined,
+                quarterId: filters.value.quarterId || undefined,
                 agencyId: filters.value.agencyId || undefined,
                 categoryId: filters.value.categoryId || undefined,
                 statusId: filters.value.statusId || undefined,
@@ -44,6 +47,7 @@ const { data: projects, refresh: refreshProjects } = await useAsyncData(
         return await $fetch("/api/projects", {
             params: {
                 fiscalYearId: filters.value.fiscalYearId || undefined,
+                quarterId: filters.value.quarterId || undefined,
                 agencyId: filters.value.agencyId || undefined,
                 categoryId: filters.value.categoryId || undefined,
                 statusId: filters.value.statusId || undefined,
@@ -115,7 +119,6 @@ const columns = [
     { accessorKey: "quarterName", header: "ไตรมาส" },
     { accessorKey: "category", header: "ประเภท" },
     { accessorKey: "name", header: "ชื่อแผนงาน-โครงการ" },
-    { accessorKey: "agency", header: "กลุ่มงาน" },
     { accessorKey: "responsible", header: "ผู้รับผิดชอบ" },
     { accessorKey: "actualBudget", header: "งบฯ ที่ใช้จริง" },
     { accessorKey: "status", header: "สถานะ" },
@@ -286,9 +289,9 @@ const iconMap: Record<string, string> = {
                             <ClientOnly>
                                 <select
                                     v-model="filters.fiscalYearId"
-                                    class="h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary"
+                                    class="h-9 px-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary w-[110px]"
                                 >
-                                    <option value="">ทุกปีงบประมาณ</option>
+                                    <option value="">ปีงบประมาณ</option>
                                     <option
                                         v-for="y in years as any[]"
                                         :key="y.id"
@@ -299,10 +302,24 @@ const iconMap: Record<string, string> = {
                                 </select>
 
                                 <select
-                                    v-model="filters.agencyId"
-                                    class="h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary"
+                                    v-model="filters.quarterId"
+                                    class="h-9 px-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary w-[100px]"
                                 >
-                                    <option value="">ทุกกลุ่มงาน</option>
+                                    <option value="">ไตรมาส</option>
+                                    <option
+                                        v-for="q in quartersMaster as any[]"
+                                        :key="q.id"
+                                        :value="q.id"
+                                    >
+                                        {{ q.name }}
+                                    </option>
+                                </select>
+
+                                <select
+                                    v-model="filters.agencyId"
+                                    class="h-9 px-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary w-[130px]"
+                                >
+                                    <option value="">กลุ่มงาน</option>
                                     <option
                                         v-for="a in agencies as any[]"
                                         :key="a.id"
@@ -314,9 +331,9 @@ const iconMap: Record<string, string> = {
 
                                 <select
                                     v-model="filters.categoryId"
-                                    class="h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary"
+                                    class="h-9 px-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary w-[120px]"
                                 >
-                                    <option value="">ทุกประเภท</option>
+                                    <option value="">ประเภท</option>
                                     <option
                                         v-for="c in categories as any[]"
                                         :key="c.id"
@@ -328,9 +345,9 @@ const iconMap: Record<string, string> = {
 
                                 <select
                                     v-model="filters.statusId"
-                                    class="h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary"
+                                    class="h-9 px-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary w-[110px]"
                                 >
-                                    <option value="">ทุกสถานะ</option>
+                                    <option value="">สถานะ</option>
                                     <option
                                         v-for="s in statuses as any[]"
                                         :key="s.id"
@@ -348,6 +365,7 @@ const iconMap: Record<string, string> = {
                                 @click="
                                     filters = {
                                         fiscalYearId: '',
+                                        quarterId: '',
                                         agencyId: '',
                                         categoryId: '',
                                         statusId: '',
@@ -375,15 +393,10 @@ const iconMap: Record<string, string> = {
                             }}</span>
                         </template>
 
-                        <!-- <template #name-cell="{ row }">
-                            <div class="min-w-[300px] max-w-[500px] whitespace-normal break-words leading-relaxed py-1">
-                                {{ row.original.name }}
-                            </div>
-                        </template> -->
                         <template #name-cell="{ row }">
-                            <div class="min-w-0 max-w-[400px]">
+                            <div class="min-w-[250px] max-w-[450px]">
                                 <div
-                                    class="break-all whitespace-normal leading-relaxed"
+                                    class="break-words whitespace-normal leading-relaxed py-1"
                                 >
                                     {{ row.original.name }}
                                 </div>
