@@ -24,6 +24,10 @@ export default defineNuxtConfig({
     }
   },
 
+  build: {
+    transpile: ['exceljs']
+  },
+
   colorMode: {
     preference: 'light'
   },

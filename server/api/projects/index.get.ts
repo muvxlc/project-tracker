@@ -44,6 +44,7 @@ export default defineEventHandler(async (event) => {
     initialBudget: projects.initialBudget,
     actualBudget: projects.actualBudget,
     implementationDate: projects.implementationDate,
+    completionDate: projects.completionDate,
     fiscalYear: fiscalYears.year,
     quarterName: quarters.name,
     category: categories.name,
@@ -52,6 +53,7 @@ export default defineEventHandler(async (event) => {
     budgetSource: budgetSources.name,
     status: projectStatuses.name,
     statusColor: projectStatuses.color,
+    description: projects.description,
     createdById: projects.createdById
   })
   .from(projects)

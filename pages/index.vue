@@ -68,6 +68,19 @@ const formatBudget = (val: string | number) => {
     }).format(Number(val));
 };
 
+// Export to Excel (Server-side)
+const exportExcel = () => {
+    const params = new URLSearchParams();
+    if (filters.value.fiscalYearId) params.append('fiscalYearId', filters.value.fiscalYearId);
+    if (filters.value.quarterId) params.append('quarterId', filters.value.quarterId);
+    if (filters.value.agencyId) params.append('agencyId', filters.value.agencyId);
+    if (filters.value.categoryId) params.append('categoryId', filters.value.categoryId);
+    if (filters.value.statusId) params.append('statusId', filters.value.statusId);
+    if (filters.value.search) params.append('search', filters.value.search);
+
+    window.open(`/api/projects/export?${params.toString()}`, '_blank');
+};
+
 const totalProjectsCount = computed(() => projects.value?.length || 0);
 
 const getStatusCount = (statusName: string) => {
@@ -115,14 +128,22 @@ const deleteProject = async (id: number) => {
 };
 
 const columns = [
-    { accessorKey: "fiscalYear", header: "ปีงบฯ" },
-    { accessorKey: "quarterName", header: "ไตรมาส" },
-    { accessorKey: "category", header: "ประเภท" },
-    { accessorKey: "name", header: "ชื่อแผนงาน-โครงการ" },
-    { accessorKey: "responsible", header: "ผู้รับผิดชอบ" },
-    { accessorKey: "actualBudget", header: "งบฯ ที่ใช้จริง" },
-    { accessorKey: "status", header: "สถานะ" },
-    { accessorKey: "actions", header: "" },
+    { accessorKey: "fiscalYear", header: "ปีงบฯ", class: "text-center" },
+    { accessorKey: "quarterName", header: "ไตรมาส", class: "text-center" },
+    { accessorKey: "category", header: "ประเภท", class: "text-center" },
+    { accessorKey: "name", header: "ชื่อแผนงาน-โครงการ", class: "text-left" },
+    {
+        accessorKey: "responsible",
+        header: "ผู้รับผิดชอบ",
+        class: "text-center",
+    },
+    {
+        accessorKey: "actualBudget",
+        header: "งบฯ ที่ใช้จริง",
+        class: "text-right",
+    },
+    { accessorKey: "status", header: "สถานะ", class: "text-center" },
+    { accessorKey: "actions", header: "", class: "text-center" },
 ];
 
 const colorMap: Record<string, string> = {
@@ -187,7 +208,14 @@ const iconMap: Record<string, string> = {
                 <h1 class="text-2xl font-bold">
                     แผงควบคุมติดตามแผนงาน โครงการ
                 </h1>
-                <div class="flex gap-2">
+                <div class="flex gap-2 print:hidden">
+                    <UButton
+                        icon="i-heroicons-document-arrow-down"
+                        color="green"
+                        variant="soft"
+                        label="Excel"
+                        @click="exportExcel"
+                    />
                     <UButton
                         to="/projects/create"
                         icon="i-heroicons-plus"
@@ -200,7 +228,7 @@ const iconMap: Record<string, string> = {
             <ClientOnly>
                 <div
                     v-if="stats"
-                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 print:hidden"
                 >
                     <!-- Total Card -->
                     <UCard class="border-l-4 border-l-blue-500 shadow-sm">
@@ -270,10 +298,10 @@ const iconMap: Record<string, string> = {
             </ClientOnly>
 
             <!-- Filters & Project List -->
-            <UCard>
+            <UCard class="print:shadow-none print:border-none">
                 <template #header>
                     <div
-                        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+                        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden"
                     >
                         <div class="font-bold text-lg">รายการทั้งหมด</div>
 
@@ -289,7 +317,7 @@ const iconMap: Record<string, string> = {
                             <ClientOnly>
                                 <select
                                     v-model="filters.fiscalYearId"
-                                    class="h-9 px-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary w-[110px]"
+                                    class="h-9 px-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary w-[110px] text-center"
                                 >
                                     <option value="">ปีงบประมาณ</option>
                                     <option
@@ -303,7 +331,7 @@ const iconMap: Record<string, string> = {
 
                                 <select
                                     v-model="filters.quarterId"
-                                    class="h-9 px-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary w-[100px]"
+                                    class="h-9 px-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary w-[100px] text-center"
                                 >
                                     <option value="">ไตรมาส</option>
                                     <option
@@ -317,7 +345,7 @@ const iconMap: Record<string, string> = {
 
                                 <select
                                     v-model="filters.agencyId"
-                                    class="h-9 px-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary w-[130px]"
+                                    class="h-9 px-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary w-[130px] text-center"
                                 >
                                     <option value="">กลุ่มงาน</option>
                                     <option
@@ -331,7 +359,7 @@ const iconMap: Record<string, string> = {
 
                                 <select
                                     v-model="filters.categoryId"
-                                    class="h-9 px-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary w-[120px]"
+                                    class="h-9 px-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary w-[120px] text-center"
                                 >
                                     <option value="">ประเภท</option>
                                     <option
@@ -345,7 +373,7 @@ const iconMap: Record<string, string> = {
 
                                 <select
                                     v-model="filters.statusId"
-                                    class="h-9 px-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary w-[110px]"
+                                    class="h-9 px-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary w-[110px] text-center"
                                 >
                                     <option value="">สถานะ</option>
                                     <option
@@ -382,19 +410,45 @@ const iconMap: Record<string, string> = {
                         :data="projects || []"
                         :columns="columns"
                         class="w-full"
+                        :ui="{
+                            th: {
+                                base: 'text-center !text-center justify-center',
+                            },
+                            td: { base: 'text-center' },
+                        }"
                     >
+                        <template #fiscalYear-cell="{ row }">
+                            <div class="text-center">
+                                {{ row.original.fiscalYear }}
+                            </div>
+                        </template>
+
+                        <template #quarterName-cell="{ row }">
+                            <div class="text-center">
+                                {{ row.original.quarterName }}
+                            </div>
+                        </template>
+
+                        <template #category-cell="{ row }">
+                            <div class="text-center text-sm">
+                                {{ row.original.category }}
+                            </div>
+                        </template>
+
                         <template #actualBudget-cell="{ row }">
-                            <span class="font-medium">{{
-                                formatBudget(
-                                    row.original.actualBudget ||
-                                        row.original.budget ||
-                                        0,
-                                )
-                            }}</span>
+                            <span class="font-medium text-right block text-sm px-2">
+                                {{
+                                    formatBudget(
+                                        row.original.actualBudget ||
+                                            row.original.budget ||
+                                            0,
+                                    )
+                                }}
+                            </span>
                         </template>
 
                         <template #name-cell="{ row }">
-                            <div class="min-w-[250px] max-w-[450px]">
+                            <div class="min-w-[250px] max-w-[450px] text-left">
                                 <div
                                     class="break-words whitespace-normal leading-relaxed py-1"
                                 >
@@ -404,19 +458,21 @@ const iconMap: Record<string, string> = {
                         </template>
 
                         <template #status-cell="{ row }">
-                            <div
-                                :class="[
-                                    colorMap[row.original.statusColor] ||
-                                        'bg-blue-600',
-                                    'px-2 py-0.5 rounded text-[10px] text-white font-bold inline-block whitespace-nowrap',
-                                ]"
-                            >
-                                {{ row.original.status }}
+                            <div class="flex justify-center">
+                                <div
+                                    :class="[
+                                        colorMap[row.original.statusColor] ||
+                                            'bg-blue-600',
+                                        'px-2 py-0.5 rounded text-[10px] text-white font-bold inline-block whitespace-nowrap',
+                                    ]"
+                                >
+                                    {{ row.original.status }}
+                                </div>
                             </div>
                         </template>
 
                         <template #actions-cell="{ row }">
-                            <div class="flex gap-1">
+                            <div class="flex gap-1 justify-center print:hidden">
                                 <UButton
                                     v-if="canEdit(row.original)"
                                     icon="i-heroicons-pencil-square"
@@ -450,7 +506,7 @@ const iconMap: Record<string, string> = {
 
             <!-- Budget Summary Cards -->
             <ClientOnly>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 print:hidden">
                     <!-- Initial Budget Card -->
                     <UCard
                         class="bg-blue-600 text-white border-none shadow-md overflow-hidden relative"
@@ -460,7 +516,7 @@ const iconMap: Record<string, string> = {
                         >
                             <div>
                                 <div
-                                    class="text-2xl text-blue-100 font-bold uppercase tracking-wider opacity-90"
+                                    class="text-sm text-blue-100 font-bold uppercase tracking-wider opacity-90"
                                 >
                                     งบประมาณตั้งต้นรวม
                                 </div>
@@ -497,7 +553,7 @@ const iconMap: Record<string, string> = {
                         >
                             <div>
                                 <div
-                                    class="text-2xl text-green-100 font-bold uppercase tracking-wider opacity-90"
+                                    class="text-sm text-green-100 font-bold uppercase tracking-wider opacity-90"
                                 >
                                     งบประมาณที่ใช้จริงรวม
                                 </div>
@@ -604,3 +660,46 @@ const iconMap: Record<string, string> = {
         </div>
     </div>
 </template>
+
+<style scoped>
+:deep(th) {
+    text-align: center !important;
+}
+:deep(th > *) {
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 1cm;
+    }
+    body {
+        background-color: white !important;
+        color: black !important;
+    }
+    .space-y-12, .space-y-8 {
+        margin: 0 !important;
+        padding: 0 !important;
+        gap: 0 !important;
+    }
+    :deep(table) {
+        border-collapse: collapse !important;
+        width: 100% !important;
+        table-layout: auto !important;
+    }
+    :deep(th), :deep(td) {
+        border: 1px solid #ddd !important;
+        padding: 8px !important;
+        color: black !important;
+        font-size: 11pt !important;
+    }
+    :deep(th) {
+        background-color: #f8f9fa !important;
+    }
+    .print\:hidden {
+        display: none !important;
+    }
+}
+</style>
