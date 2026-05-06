@@ -16,6 +16,8 @@ logs
 # Project specific
 public/uploads/*
 !public/uploads/.gitkeep
+storage/uploads/
+graphify-out/
 
 # IDEs and Tools
 .DS_Store
@@ -31,6 +33,8 @@ public/uploads/*
 .kilocode
 .mcp.json
 skills-lock.json
+python
+docs/maestro/
 
 # Local env files
 .env
