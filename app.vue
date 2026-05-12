@@ -42,7 +42,7 @@ useHead({
                             <UIcon
                                 name="i-heroicons-clipboard-document-check"
                             />
-                            ระบบติดตามแผนงาน โครงการ
+                            MIS - ระบบสารสนเทศบริหารจัดการ
                         </NuxtLink>
 
                         <!-- Admin Navigation -->
@@ -61,13 +61,7 @@ useHead({
                                 <UIcon name="i-heroicons-users" />
                                 จัดการผู้ใช้
                             </NuxtLink>
-                            <NuxtLink
-                                to="/admin/master-data"
-                                class="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1"
-                            >
-                                <UIcon name="i-heroicons-cog-6-tooth" />
-                                ตั้งค่าข้อมูลพื้นฐาน
-                            </NuxtLink>
+
                         </div>
                     </div>
 
