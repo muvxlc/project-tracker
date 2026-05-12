@@ -8,7 +8,7 @@ const { user } = useUser();
         <div v-if="user" class="space-y-8">
             <div class="flex justify-between items-center">
                 <h1 class="text-2xl font-bold">
-                    แผงควบคุมระบบ
+                    Dashboard
                 </h1>
                 <div class="text-sm text-gray-500">
                     ยินดีต้อนรับ, {{ user.fullName || user.username }}
@@ -68,7 +68,7 @@ const { user } = useUser();
                     </div>
                 </UCard>
 
-                <!-- ThaiID Card -->
+                <!-- Auth Method Card -->
                 <UCard class="border-l-4 border-l-orange-500 shadow-sm">
                     <div class="flex items-center gap-4">
                         <div class="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full">
@@ -120,10 +120,11 @@ const { user } = useUser();
         <div v-else class="space-y-12">
             <section class="text-center py-12">
                 <h2 class="text-4xl font-extrabold sm:text-6xl text-blue-600">
-                    MIS - ระบบสารสนเทศบริหารจัดการ
+                    Nuxt Base Stack
                 </h2>
                 <p class="mt-4 text-xl text-gray-500 max-w-2xl mx-auto">
-                    ระบบจัดการข้อมูลและผู้ใช้งาน พร้อมรองรับการยืนยันตัวตนผ่าน ThaiID
+                    โครงสร้างพื้นฐานสำหรับพัฒนา Web Application ด้วย Nuxt 4
+                    พร้อม Docker, Database, และ Authentication
                 </p>
                 <div class="mt-8 flex justify-center gap-4">
                     <UButton
@@ -148,20 +149,20 @@ const { user } = useUser();
                 <UCard class="hover:border-blue-500 transition-colors shadow-sm text-center">
                     <template #header>
                         <div class="flex flex-col items-center gap-2">
-                            <UIcon name="i-heroicons-users" class="text-blue-500 w-10 h-10" />
-                            <span class="font-bold text-lg text-gray-900 dark:text-white">จัดการผู้ใช้</span>
+                            <UIcon name="i-heroicons-server-stack" class="text-blue-500 w-10 h-10" />
+                            <span class="font-bold text-lg text-gray-900 dark:text-white">Production Ready</span>
                         </div>
                     </template>
-                    ระบบจัดการผู้ใช้งานแบบครบวงจร พร้อมกำหนดสิทธิ์การใช้งานแยกตามหน่วยงานและบทบาท
+                    พร้อมใช้งานกับ Docker Compose พร้อม Health Check, Rate Limiting, และ Reverse Proxy
                 </UCard>
                 <UCard class="hover:border-blue-500 transition-colors shadow-sm text-center">
                     <template #header>
                         <div class="flex flex-col items-center gap-2">
-                            <UIcon name="i-heroicons-building-office" class="text-blue-500 w-10 h-10" />
-                            <span class="font-bold text-lg text-gray-900 dark:text-white">จัดการหน่วยงาน</span>
+                            <UIcon name="i-heroicons-bolt" class="text-blue-500 w-10 h-10" />
+                            <span class="font-bold text-lg text-gray-900 dark:text-white">Fast Development</span>
                         </div>
                     </template>
-                    รองรับการจัดการหน่วยงานและองค์กร พร้อมการจัดกลุ่มผู้ใช้งานตามโครงสร้างองค์กร
+                    พัฒนาได้รวดเร็วด้วย Nuxt 4, Drizzle ORM, และ tooling ที่ทันสมัย
                 </UCard>
             </div>
         </div>

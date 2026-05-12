@@ -1,5 +1,6 @@
 {
-  "name": "mis",
+  "name": "nuxt-base-stack",
+  "description": "Nuxt 4 base stack with Docker, MariaDB, Redis, Authentication, and User Management",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,7 +11,8 @@
     "postinstall": "nuxt prepare",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "npx tsx server/scripts/seed.ts"
   },
   "dependencies": {
     "@nuxt/ui": "^4.6.0",

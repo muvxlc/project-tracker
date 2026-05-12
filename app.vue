@@ -42,7 +42,7 @@ useHead({
                             <UIcon
                                 name="i-heroicons-clipboard-document-check"
                             />
-                            MIS - ระบบสารสนเทศบริหารจัดการ
+                            Nuxt Base Stack
                         </NuxtLink>
 
                         <!-- Admin Navigation -->
