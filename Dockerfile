@@ -47,8 +47,7 @@ EXPOSE 3000
 
 # Health check (ยิงไปที่ภายในของโครงสร้าง .output)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
-
+    CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 3000) + '/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
 # Start app ด้วยการชี้เข้าไปที่โฟลเดอร์ .output/server/index.mjs
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", ".output/server/index.mjs"]
