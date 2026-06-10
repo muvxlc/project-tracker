@@ -58,25 +58,30 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
-      PORT: 3000
+      # [แก้ไข] ให้แอป Nuxt ภายในเปิดตามพอร์ตที่กำหนดใน .env (Default: 3000)
+      PORT: ${PORT:-3000}
       # Database
       DATABASE_URL: mysql://${MYSQL_USER:-mis_user}:${MYSQL_PASSWORD:-mis_password}@mariadb:3306/${MYSQL_DATABASE:-mis_db}
       # Redis
       REDIS_HOST: redis
+      # พอร์ตเชื่อมต่อภายในโครงสร้างของ Container Network ไปหา Redis ให้คงพอร์ตมาตรฐาน 6379 เอาไว้
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-redispassword}
       # JWT
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
       # ThaiID OAuth
       THAID_CLIENT_ID: ${THAID_CLIENT_ID}
+      # ปรับปรุงให้ยืดหยุ่นตามพอร์ตแอปจริง
       THAID_CLIENT_SECRET: ${THAID_CLIENT_SECRET}
-      THAID_REDIRECT_URI: ${THAID_REDIRECT_URI:-http://localhost:3000/api/auth/thaid/callback}
+      THAID_REDIRECT_URI: ${THAID_REDIRECT_URI:-http://localhost:${PORT:-3000}/api/auth/thaid/callback}
     ports:
-      - "${APP_PORT:-3000}:3000"
+      # [แก้ไข] ปรับพอร์ตทางฝั่งซ้าย (Host) และขวา (Container) ให้ดึงค่าจากตัวแปร PORT ตัวเดียวกันใน .env
+      - "${PORT:-3000}:${PORT:-3000}"
     volumes:
       - public_uploads:/app/public/uploads
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      # [แก้ไข] ปรับให้ยิงทดสอบไปยังพอร์ตจริงแปรผันตามค่าใน .env 
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${PORT:-3000}/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -84,23 +89,7 @@ services:
     networks:
       - mis-network
 
-  # Nginx Reverse Proxy (Optional - for production)
-  nginx:
-    image: nginx:alpine
-    container_name: mis-nginx
-    restart: unless-stopped
-    depends_on:
-      - app
-    ports:
-      - "${NGINX_HTTP_PORT:-80}:80"
-      - "${NGINX_HTTPS_PORT:-443}:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx-ssl:/etc/nginx/ssl:ro
-    networks:
-      - mis-network
-    profiles:
-      - with-nginx
+# [ปรับปรุง] ถอดบล็อกบริการ nginx ออกไปเลย เนื่องจากใช้ Proxy Manager ด้านนอกแล้ว
 
 volumes:
   mariadb_data:
