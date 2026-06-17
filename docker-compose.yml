@@ -7,12 +7,12 @@ services:
     container_name: tracker-mariadb
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "${DB_PORT:-3306}:3306"
+      - "${DB_PORT:-3336}:3306"  # เปิด 3336 ให้คอมพิวเตอร์ข้างนอกเกาะ Navicat ได้
     volumes:
       - tracker_mariadb_data:/var/lib/mysql
       - /etc/komodo/stacks/project-tracker/backup.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
@@ -60,7 +60,7 @@ services:
       NODE_ENV: production
       PORT: ${PORT:-3000}
       DB_HOST: mariadb
-      DB_PORT: 3306
+      DB_PORT: 3306                     # หลังบ้านเกาะพอร์ตภายในคอนเทนเนอร์เสมอ
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
