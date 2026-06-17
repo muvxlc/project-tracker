@@ -1,4 +1,50 @@
-# Nuxt App
+version: '3.9'
+
+services:
+  # MariaDB Database
+  mariadb:
+    image: mariadb:11.4
+    container_name: tracker-mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - tracker_mariadb_data:/var/lib/mysql
+      - /etc/komodo/stacks/project-tracker/backup.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - tracker-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: tracker-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispassword}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - tracker_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - tracker-network
+
+  # Nuxt App
   app:
     build:
       context: .
@@ -13,23 +59,15 @@
     environment:
       NODE_ENV: production
       PORT: ${PORT:-3000}
-      
-      # 1. ส่งตัวแปรเดี่ยวสำหรับโค้ดรุ่นเก่าให้อ่านจับคู่ได้ถูกตัว
-      DB_HOST: mariadb  # <--- ชี้ไปที่ชื่อ service mariadb ในเน็ตเวิร์กเดียวกัน
+      DB_HOST: mariadb
       DB_PORT: 3306
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
-
-      # 2. ส่งแบบ URL String สำรองไว้สำหรับส่วนอื่น (เช่น ตระกูล Prisma/Drizzle ตัวใหม่ๆ)
       DATABASE_URL: mysql://${DB_USER}:${DB_PASSWORD}@mariadb:3306/${DB_NAME}
-      
-      # Redis
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-redispassword}
-      
-      # Auth & ThaiID
       JWT_SECRET: ${JWT_SECRET}
       THAID_CLIENT_ID: ${THAID_CLIENT_ID}
       THAID_CLIENT_SECRET: ${THAID_CLIENT_SECRET}
@@ -46,3 +84,15 @@
       start_period: 40s
     networks:
       - tracker-network
+
+volumes:
+  tracker_mariadb_data:
+    driver: local
+  tracker_redis_data:
+    driver: local
+  tracker_public_uploads:
+    driver: local
+
+networks:
+  tracker-network:
+    driver: bridge
