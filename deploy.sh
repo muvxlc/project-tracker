@@ -1,97 +1,50 @@
 #!/bin/bash
 
-# MIS Docker Deployment Script
+# Project Deployment Script (Linux/macOS/WSL)
+# ---------------------------------
 
-set -e
+echo "🚀 Starting Deployment Process..."
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Functions
-print_info() {
-    echo -e "${BLUE}ℹ ${1}${NC}"
-}
-
-print_success() {
-    echo -e "${GREEN}✓ ${1}${NC}"
-}
-
-print_warning() {
-    echo -e "${YELLOW}⚠ ${1}${NC}"
-}
-
-print_error() {
-    echo -e "${RED}✗ ${1}${NC}"
-}
-
-# Check if .env exists
+# 1. Check for .env file
 if [ ! -f .env ]; then
-    print_warning ".env file not found. Creating from .env.example..."
-    cp .env.example .env
-    print_success "Created .env file. Please edit it with your configuration."
-    print_info "Edit .env file and run this script again."
+    echo "❌ Error: .env file not found!"
+    echo "Please create .env file from .env.example and fill in the values."
     exit 1
 fi
 
-# Load environment variables
-print_info "Loading environment variables..."
-export $(cat .env | grep -v '^#' | xargs)
+# 2. Create necessary storage directories
+echo "📁 Preparing storage directories..."
+mkdir -p storage/uploads/projects
 
-# Stop existing containers
-print_info "Stopping existing containers..."
-docker-compose down
-
-# Build and start services
-print_info "Building and starting services..."
-docker-compose up -d --build
-
-# Wait for services to be healthy
-print_info "Waiting for services to be ready..."
-sleep 10
-
-# Check service health
-print_info "Checking service health..."
-
-# Check MariaDB
-if docker-compose ps mariadb | grep -q "Up (healthy)"; then
-    print_success "MariaDB is healthy"
-else
-    print_error "MariaDB is not healthy"
-    docker-compose logs mariadb
+# Only run chown/chmod on Linux/macOS systems
+if [[ "$OSTYPE" != "msys" && "$OSTYPE" != "win32" ]]; then
+    echo "🔒 Setting Linux permissions..."
+    sudo chown -R $USER:$USER storage 2>/dev/null || echo "⚠️ chown failed, skipping..."
+    chmod -R 755 storage
 fi
 
-# Check Redis
-if docker-compose ps redis | grep -q "Up (healthy)"; then
-    print_success "Redis is healthy"
-else
-    print_error "Redis is not healthy"
-    docker-compose logs redis
+# 3. Build and Start Containers
+echo "📦 Building and starting Docker containers..."
+docker compose up -d --build
+
+# 4. Wait for Database to be ready
+echo "⏳ Waiting for database to be ready (15s)..."
+sleep 15
+
+# 5. Optional: Import Database Backup
+if [ -f backup.sql ]; then
+    echo "❓ Found backup.sql. Do you want to import it?"
+    read -p "(y/n): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "📥 Importing database backup..."
+        # Extract DB_NAME and DB_PASSWORD from .env
+        DB_NAME=$(grep DB_NAME .env | cut -d '=' -f2 | tr -d '\r')
+        DB_PASS=$(grep DB_PASSWORD .env | cut -d '=' -f2 | tr -d '\r')
+        
+        docker compose exec -T db mariadb -u root -p"$DB_PASS" "$DB_NAME" < backup.sql
+        echo "✅ Database import completed."
+    fi
 fi
 
-# Check App
-if docker-compose ps app | grep -q "Up (healthy)"; then
-    print_success "App is healthy"
-else
-    print_error "App is not healthy"
-    docker-compose logs app
-fi
-
-# Run database migrations/seed
-print_info "Running database seed..."
-docker-compose exec -T app npx tsx server/scripts/seed.ts || print_warning "Seed failed or already seeded"
-
-# Show logs
-print_info "Showing recent logs..."
-docker-compose logs --tail=20 app
-
-# Show status
-print_success "Deployment completed!"
-echo ""
-docker-compose ps
-
-print_info "Application is running at: http://localhost:${APP_PORT:-3000}"
-print_info "Default credentials: admin / admin123"
+echo "✨ Deployment Finished Successfully!"

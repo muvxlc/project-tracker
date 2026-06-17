@@ -41,13 +41,3 @@ docs/maestro/
 .env.*
 !.env.example
 .backup.sql
-*.sql
-!init-db.sql
-
-# Docker (keep for base project)
-# Dockerfile
-# docker-compose.yml
-# .dockerignore
-# nginx.conf
-nginx-ssl/
-# deploy.sh

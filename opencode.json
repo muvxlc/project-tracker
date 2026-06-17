@@ -1,0 +1,20 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "mcp": {
+    "gemini-api-docs-mcp.dev": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "gemini-api-docs-mcp.dev"
+      ],
+      "enabled": true,
+      "environment": {}
+    },
+    "gemini-api-docs-mcp": {
+      "type": "remote",
+      "url": "https://gemini-api-docs-mcp.dev",
+      "enabled": true
+    }
+  }
+}
