@@ -1,66 +1,94 @@
-services:
-  db:
-    image: mariadb:11
-    restart: always
-    environment:
-      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
-      MARIADB_DATABASE: ${DB_NAME}
-      TZ: Asia/Bangkok
-    ports:
-      - "3306:3306"
-    volumes:
-      - db_data:/var/lib/mysql
+version: '3.9'
 
+services:
+  # MariaDB Database
+  mariadb:
+    image: mariadb:11.4
+    container_name: tracker-mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-tracker_db}
+      MYSQL_USER: ${MYSQL_USER:-tracker_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-tracker_password}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - tracker_mariadb_data:/var/lib/mysql
+      # แมปไฟล์จาก Host เข้ามาอิมพอร์ตอัตโนมัติ
+      - /etc/komodo/stacks/project-tracker/backup.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-p$${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - tracker-network
+
+  # Redis Cache
   redis:
     image: redis:7-alpine
-    restart: always
-    environment:
-      TZ: Asia/Bangkok
+    container_name: tracker-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispassword}
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
-      - redis_data:/data
+      - tracker_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - tracker-network
 
+  # Nuxt App
   app:
     build:
       context: .
       dockerfile: Dockerfile
-      target: dev
-    restart: always
-    ports:
-      - "3001:3000"
-    environment:
-      - NODE_ENV=development
-      - TZ=Asia/Bangkok
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_USER=root
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - JWT_SECRET=${JWT_SECRET}
-      - NUXT_HOST=0.0.0.0
-      - NUXT_PORT=3000
-      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
-      - THAID_CLIENT_ID=${THAID_CLIENT_ID}
-      - THAID_CLIENT_SECRET=${THAID_CLIENT_SECRET}
-      - THAID_REDIRECT_URI=${THAID_REDIRECT_URI}
-      - THAID_BASE_URL=${THAID_BASE_URL}
-      - THAID_TOKEN_URL=${THAID_TOKEN_URL}
-      - THAID_USERINFO_URL=${THAID_USERINFO_URL}
+    container_name: tracker-app
+    restart: unless-stopped
     depends_on:
-      - db
-      - redis
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: ${PORT:-3000}
+      DATABASE_URL: mysql://${MYSQL_USER:-tracker_user}:${MYSQL_PASSWORD:-tracker_password}@mariadb:3306/${MYSQL_DATABASE:-tracker_db}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redispassword}
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      THAID_CLIENT_ID: ${THAID_CLIENT_ID}
+      THAID_CLIENT_SECRET: ${THAID_CLIENT_SECRET}
+      THAID_REDIRECT_URI: ${THAID_REDIRECT_URI:-http://localhost:${PORT:-3000}/api/auth/thaid/callback}
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
     volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.nuxt
-      - ./storage:/app/storage
-    command: npm run dev
+      - tracker_public_uploads:/app/public/uploads
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${PORT:-3000}/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - tracker-network
 
 volumes:
-  db_data:
-  redis_data:
+  tracker_mariadb_data:
+    driver: local
+  tracker_redis_data:
+    driver: local
+  tracker_public_uploads:
+    driver: local
+
+networks:
+  tracker-network:
+    driver: bridge
