@@ -7,18 +7,19 @@ services:
     container_name: tracker-mariadb
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-tracker_db}
-      MYSQL_USER: ${MYSQL_USER:-tracker_user}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-tracker_password}
+      # ดึงรหัสผ่านและชื่อ DB ตรงจาก .env ของคุณ
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "${DB_PORT:-3306}:3306"
     volumes:
       - tracker_mariadb_data:/var/lib/mysql
-      # แมปไฟล์จาก Host เข้ามาอิมพอร์ตอัตโนมัติ
       - /etc/komodo/stacks/project-tracker/backup.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
     healthcheck:
-      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-p$${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      # แก้ไขให้ใช้ CMD-SHELL ping ผ่านเครื่องตัวเอง ไม่ต้องง้อรหัสผ่าน root ในคอมโพส
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -60,14 +61,16 @@ services:
     environment:
       NODE_ENV: production
       PORT: ${PORT:-3000}
-      DATABASE_URL: mysql://${MYSQL_USER:-tracker_user}:${MYSQL_PASSWORD:-tracker_password}@mariadb:3306/${MYSQL_DATABASE:-tracker_db}
+      # ปรับตรงนี้ให้ map เข้าหาตัวแปรจริงใน .env ของคุณอย่างถูกต้อง
+      DATABASE_URL: mysql://${DB_USER}:${DB_PASSWORD}@mariadb:3306/${DB_NAME}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-redispassword}
-      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      JWT_SECRET: ${JWT_SECRET}
       THAID_CLIENT_ID: ${THAID_CLIENT_ID}
       THAID_CLIENT_SECRET: ${THAID_CLIENT_SECRET}
-      THAID_REDIRECT_URI: ${THAID_REDIRECT_URI:-http://localhost:${PORT:-3000}/api/auth/thaid/callback}
+      # ปรับให้ยืดหยุ่นตามพอร์ตจริงภายนอก
+      THAID_REDIRECT_URI: ${THAID_REDIRECT_URI}
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
     volumes:
